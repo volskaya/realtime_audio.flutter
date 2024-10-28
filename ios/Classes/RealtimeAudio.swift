@@ -341,7 +341,7 @@ extension RealtimeAudio {
       }
     }
 
-    playAudio()
+    if !state.isPaused { playAudio() }
   }
 
   private func playAudio() {

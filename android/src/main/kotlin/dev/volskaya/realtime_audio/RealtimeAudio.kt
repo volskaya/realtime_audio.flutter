@@ -251,7 +251,9 @@ class RealtimeAudio(
     chunkQueue.add(queuedChunkEntry)
     methodChannel.invokeMethod("chunkQueued", id)
 
-    playAudio()
+    if (audioTrack.playState != AudioTrack.PLAYSTATE_PAUSED) {
+      playAudio()
+    }
   }
 
   private fun playAudio() {
