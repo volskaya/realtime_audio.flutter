@@ -40,7 +40,7 @@ class RealtimeAudio {
     this.playerVolumeInterval = 40,
     this.recorderChunkInterval = 40,
   }) {
-    _initialize();
+    isInitialized = _initialize();
   }
 
   final bool voiceProcessing;
@@ -49,6 +49,8 @@ class RealtimeAudio {
   final int playerProgressInterval;
   final int playerVolumeInterval;
   final int recorderChunkInterval;
+
+  late final Future<void> isInitialized;
 
   static const _staticChannel = MethodChannel('dev.volskaya.RealtimeAudio/plugin');
   static const _uuid = Uuid();
@@ -74,9 +76,6 @@ class RealtimeAudio {
   String? _id;
   MethodChannel? _channel;
   bool _isDisposed = false;
-
-  final _initialized = Completer<void>();
-  Future<void> get isInitialized => _initialized.future;
 
   RealtimeAudioState _state = const RealtimeAudioState();
   RealtimeAudioState get state => _state;
@@ -233,6 +232,8 @@ class RealtimeAudio {
     if (data.isEmpty) return Future.value();
 
     return _withInitAndLock(() async {
+      if (_channel == null) return;
+
       final effectiveId = id ?? _uuid.v4();
       final queueEntry = RealtimeAudioQueueEntry.chunk(id: effectiveId);
 
@@ -255,7 +256,9 @@ class RealtimeAudio {
 
   Future<void> _withInitAndLock(Future<void> Function() fn) async {
     await _semaphore.acquire();
-    await _initialized.future;
+    try {
+      await isInitialized;
+    } catch (_) {} // Ignore.
     if (_isDisposed) return;
     try {
       return await fn();
@@ -275,22 +278,18 @@ class RealtimeAudio {
   //
 
   Future<void> _initialize() => _semaphore.withLock(() async {
-        try {
-          final RealtimeAudioResponseCreate response = await RealtimeAudioArguments.create(
-            voiceProcessing: true,
-            recorderSampleRate: recorderSampleRate,
-            playerSampleRate: playerSampleRate,
-            playerProgressInterval: playerProgressInterval,
-            playerVolumeInterval: playerVolumeInterval,
-            recorderChunkInterval: recorderChunkInterval,
-          ).invoke(_staticChannel);
+        final RealtimeAudioResponseCreate response = await RealtimeAudioArguments.create(
+          voiceProcessing: true,
+          recorderSampleRate: recorderSampleRate,
+          playerSampleRate: playerSampleRate,
+          playerProgressInterval: playerProgressInterval,
+          playerVolumeInterval: playerVolumeInterval,
+          recorderChunkInterval: recorderChunkInterval,
+        ).invoke(_staticChannel);
 
-          _id = response.id;
-          _channel = MethodChannel('dev.volskaya.RealtimeAudio/engines/$_id');
-          _channel!.setMethodCallHandler(_handleChannel);
-        } finally {
-          _initialized.complete();
-        }
+        _id = response.id;
+        _channel = MethodChannel('dev.volskaya.RealtimeAudio/engines/$_id');
+        _channel!.setMethodCallHandler(_handleChannel);
       });
 
   Future<void> dispose() => _withInitAndLock(() async {
