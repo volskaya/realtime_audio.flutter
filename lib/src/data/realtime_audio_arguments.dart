@@ -9,9 +9,9 @@ part 'realtime_audio_arguments.g.dart';
 class RealtimeAudioArguments with _$RealtimeAudioArguments {
   const factory RealtimeAudioArguments.create({
     @Default(true) bool voiceProcessing,
+    @Default(false) bool recorderEnabled,
     @Default(24000) int recorderSampleRate,
     @Default(24000) int playerSampleRate,
-    //
     @Default(10) int playerProgressInterval,
     @Default(40) int playerVolumeInterval,
     @Default(40) int recorderChunkInterval,

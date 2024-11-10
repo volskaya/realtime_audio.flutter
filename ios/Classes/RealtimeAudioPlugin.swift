@@ -1,12 +1,12 @@
-import Foundation
-import Flutter
 import AVFoundation
+import Flutter
+import Foundation
 
 @objc public class RealtimeAudioPlugin: NSObject, FlutterPlugin {
   let messenger: FlutterBinaryMessenger
   let methodChannel: FlutterMethodChannel
-  
-  private var RealtimeAudios: [String: RealtimeAudio] = [:]
+
+  private var realtimeAudioInstances: [String: RealtimeAudio] = [:]
 
   public static func register(with registrar: any FlutterPluginRegistrar) {
     let instance = RealtimeAudioPlugin(registrar)
@@ -19,10 +19,10 @@ import AVFoundation
       name: "dev.volskaya.RealtimeAudio/plugin",
       binaryMessenger: self.messenger
     )
-    
+
     super.init()
   }
-  
+
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     do {
       try handleFlutterMethodSafe(call: call, result: result)
@@ -36,7 +36,7 @@ import AVFoundation
       result(flutterError)
     }
   }
-  
+
   private func handleFlutterMethodSafe(call: FlutterMethodCall, result: @escaping FlutterResult) throws {
     var value: Any? = nil
 
@@ -49,18 +49,18 @@ import AVFoundation
         binaryMessenger: messenger
       )
 
-      let engine = try RealtimeAudio(
+      let instance = try RealtimeAudio(
         id: id,
         arguments: arguments,
         methodChannel: channel
       )
 
-      RealtimeAudios[id] = engine
+      realtimeAudioInstances[id] = instance
       value = try CreateResponse(id: id).toJsonMap()
       break
     case "destroy":
       let arguments: DestroyArguments = try call.toArguments()
-      if let engine = RealtimeAudios.removeValue(forKey: arguments.id) {
+      if let engine = realtimeAudioInstances.removeValue(forKey: arguments.id) {
         engine.dispose()
         value = try DestroyResponse().toJsonMap()
       } else {
@@ -68,15 +68,14 @@ import AVFoundation
       }
       break
     case "getRecordPermission":
-      value = try GetRecordPermissionResponse(
-        permission: getRecordPermission()
-      ).toJsonMap()
+      let permission = RealtimeAudioPlugin.getRecordPermission()
+      value = try GetRecordPermissionResponse(permission: permission).toJsonMap()
       break
     case "requestRecordPermission":
       value = Task<(), any Error> { [weak self] in
-        guard let permission = await self?.requestRecordPermission() else { return }
+        let permission = await RealtimeAudioPlugin.requestRecordPermission()
         let response = try RequestRecordPermissionResponse(permission: permission).toJsonMap()
-        result(response)
+        if let self { result(response) }
       }
     default:
       break  // Do nothing.
@@ -111,7 +110,7 @@ import AVFoundation
     }
   }
 
-  private func getRecordPermission() -> RealtimeAudioRecordPermission {
+  static func getRecordPermission() -> RealtimeAudioRecordPermission {
     if #available(iOS 17.0, *) {
       switch AVAudioApplication.shared.recordPermission {
       case .undetermined:
@@ -137,7 +136,7 @@ import AVFoundation
     }
   }
 
-  private func requestRecordPermission() async -> RealtimeAudioRecordPermission {
+  static func requestRecordPermission() async -> RealtimeAudioRecordPermission {
     if #available(iOS 17.0, *) {
       let _ = await AVAudioApplication.requestRecordPermission()
     } else {

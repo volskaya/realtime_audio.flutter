@@ -36,8 +36,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   RealtimeAudio? audioEngine;
-  // StreamSubscription<Uint8List>? _subscription;
-
   List<StreamSubscription<dynamic>>? _subscriptions;
   RealtimeAudioState _state = const RealtimeAudioState();
 
@@ -54,11 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _previewData = [];
     } else {
       final chunks = _previewData!;
-      // final allChunks = chunks.fold<Uint8List>(
-      //     Uint8List(0), (previousValue, element) => Uint8List.fromList([...previousValue, ...element]));
-
       _previewData = null;
-      // audioEngine?.queueChunk(allChunks);
       for (final chunk in chunks) {
         audioEngine?.queueChunk(chunk);
       }
@@ -73,8 +67,11 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void createAudioEngine() {
-    audioEngine = RealtimeAudio();
+  Future<void> createAudioEngine({
+    bool recorderEnabled = false,
+  }) async {
+    audioEngine = RealtimeAudio(recorderEnabled: recorderEnabled);
+    await audioEngine!.isInitialized;
 
     _subscriptions = [
       audioEngine!.stateStream.listen((event) => setState(() => _state = event)),
@@ -92,8 +89,6 @@ class _MyHomePageState extends State<MyHomePage> {
     for (final subscription in _subscriptions ?? const []) {
       subscription.cancel();
     }
-    // _subscription?.cancel();
-    // _subscription = null;
     audioEngine?.dispose();
     audioEngine = null;
   }
@@ -103,27 +98,24 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> testPlayer() async {
-    final file = await rootBundle.load('assets/music/shelter_evil.wav');
+    final file = await rootBundle.load('assets/audio/voice.wav');
     final data = file.buffer.asUint8List();
     final chunks = <Uint8List>[];
-    final chunkSize = data.length ~/ 10;
-    // final chunkSize = 24000;
+
+    const chunkSize = 24000 * 4;
+    const chunkOffset = 88;
 
     int remaining = data.length;
-    int count = 0;
 
-    while (remaining > 0 && count < 10) {
-      final start = 400 + data.length - remaining;
+    while (remaining > 0) {
+      final start = chunkOffset + data.length - remaining;
       final end = math.min(start + chunkSize, data.length);
       final chunk = data.sublist(start, end);
 
-      // if (chunk.length < chunkSize) {
-      //   break;
-      // }
+      assert(chunk.length % 2 == 0);
 
       chunks.add(chunk);
       remaining -= chunkSize;
-      count += 1;
     }
 
     for (final chunk in chunks) {
@@ -133,29 +125,10 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void startPlayer() {
-    audioEngine?.start();
-  }
-
-  void pausePlayer() {
-    audioEngine?.pause();
-  }
-
-  void resumePlayer() {
-    audioEngine?.resume();
-  }
-
-  void stopPlayer() {
-    audioEngine?.stop();
-  }
-
-  void startRecording() {
-    // audioEngine?.startRecording();
-  }
-
-  void stopRecording() {
-    // audioEngine?.stopRecording();
-  }
+  Future<void> startPlayer() async => audioEngine?.start();
+  Future<void> pausePlayer() async => audioEngine?.pause();
+  Future<void> resumePlayer() async => audioEngine?.resume();
+  Future<void> stopPlayer() async => audioEngine?.stop();
 
   Future<void> getPermission() async {
     final permission = await RealtimeAudio.getRecordPermission();
@@ -180,8 +153,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -190,12 +161,15 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: ListView(
             children: <Widget>[
               ElevatedButton(
-                onPressed: createAudioEngine,
-                child: const Text('Create Audio Engine'),
+                onPressed: () => createAudioEngine(recorderEnabled: true),
+                child: const Text('Create Audio Engine (With Recording)'),
+              ),
+              ElevatedButton(
+                onPressed: () => createAudioEngine(recorderEnabled: false),
+                child: const Text('Create Audio Engine (Without Recording)'),
               ),
               ElevatedButton(
                 onPressed: destroyAudioEngine,

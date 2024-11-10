@@ -10,6 +10,7 @@ _$RealtimeAudioArgumentsCreateImpl _$$RealtimeAudioArgumentsCreateImplFromJson(
         Map<String, dynamic> json) =>
     _$RealtimeAudioArgumentsCreateImpl(
       voiceProcessing: json['voiceProcessing'] as bool? ?? true,
+      recorderEnabled: json['recorderEnabled'] as bool? ?? false,
       recorderSampleRate:
           (json['recorderSampleRate'] as num?)?.toInt() ?? 24000,
       playerSampleRate: (json['playerSampleRate'] as num?)?.toInt() ?? 24000,
@@ -26,6 +27,7 @@ Map<String, dynamic> _$$RealtimeAudioArgumentsCreateImplToJson(
         _$RealtimeAudioArgumentsCreateImpl instance) =>
     <String, dynamic>{
       'voiceProcessing': instance.voiceProcessing,
+      'recorderEnabled': instance.recorderEnabled,
       'recorderSampleRate': instance.recorderSampleRate,
       'playerSampleRate': instance.playerSampleRate,
       'playerProgressInterval': instance.playerProgressInterval,

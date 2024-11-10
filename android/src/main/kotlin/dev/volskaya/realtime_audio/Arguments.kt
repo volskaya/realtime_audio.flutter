@@ -4,9 +4,9 @@ import io.flutter.plugin.common.MethodCall
 
 data class CreateArguments(
   val voiceProcessing: Boolean,
+  val recorderEnabled: Boolean,
   val playerSampleRate: Int,
   val recorderSampleRate: Int,
-  //
   val playerProgressInterval: Long,
   val playerVolumeInterval: Long,
   val recorderChunkInterval: Long,
@@ -15,6 +15,7 @@ data class CreateArguments(
     fun fromMethodCall(call: MethodCall): CreateArguments {
       return CreateArguments(
         voiceProcessing = call.argument<Boolean>("voiceProcessing") ?: throw Error("Missing voiceProcessing."),
+        recorderEnabled = call.argument<Boolean>("recorderEnabled") ?: throw Error("Missing recorderEnabled."),
         playerSampleRate = call.argument<Int>("playerSampleRate") ?: throw Error("Missing playerSampleRate."),
         recorderSampleRate = call.argument<Int>("recorderSampleRate") ?: throw Error("Missing recorderSampleRate."),
         playerProgressInterval = call.argument<Int>("playerProgressInterval")?.toLong()

@@ -16,6 +16,11 @@ class RealtimeAudio: NSObject {
   private let recorderSampleRate: Double
   private let recorderFormat: AVAudioFormat
   private let recorderBufferSize: AVAudioFrameCount
+  private let recorderPreferredBus: AVAudioNodeBus = 0
+  private var recorderActiveBus: AVAudioNodeBus?
+  private var recorderHasPermission: Bool {
+    RealtimeAudioPlugin.getRecordPermission() == .granted
+  }
 
   private let playerSampleRate: Double
   private let playerInputFormat: AVAudioFormat
@@ -24,13 +29,9 @@ class RealtimeAudio: NSObject {
   private let audioSession = AVAudioSession.sharedInstance()
   private let audioEngine = AVAudioEngine()
   private let audioPlayerNode = AVAudioPlayerNode()
-  private let audioBus = 0
 
   private var chunkQueue: [ChunkEntry] = []
-  private var chunkThread: Task<(), Never>? = nil
-  private var chunkSampleTime: UInt32 {
-    return (chunkQueue.last?.offset ?? 0) + (chunkQueue.last?.buffer.frameLength ?? 0)
-  }
+  private var chunkSampleTime: UInt32 { (chunkQueue.last?.offset ?? 0) + (chunkQueue.last?.buffer.frameLength ?? 0) }
 
   private var playerConverter: AVAudioConverter?
   private var recorderConverter: AVAudioConverter?
@@ -70,15 +71,21 @@ class RealtimeAudio: NSObject {
 
     methodChannel.setMethodCallHandler(handleFlutterMethod)
 
-    try audioSession.setCategory(.playAndRecord, mode: .videoChat, options: [.defaultToSpeaker, .allowBluetooth])
-    try audioSession.setPreferredInputOrientation(.portrait)
+    if !arguments.recorderEnabled {
+      try audioSession.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
+      try audioSession.setPreferredInputOrientation(.portrait)
+    } else {
+      try audioSession.setCategory(.playAndRecord, mode: .videoChat, options: [.defaultToSpeaker, .allowBluetooth, .duckOthers])
+      try audioSession.setPreferredInputOrientation(.portrait)
 
-    if #available(iOS 13.0, *) {
-      try audioSession.setAllowHapticsAndSystemSoundsDuringRecording(false)
-
-      try audioEngine.outputNode.setVoiceProcessingEnabled(true)
-      try audioEngine.inputNode.setVoiceProcessingEnabled(true)
-      audioEngine.inputNode.isVoiceProcessingAGCEnabled = false
+      if #available(iOS 13.0, *) {
+        try audioSession.setAllowHapticsAndSystemSoundsDuringRecording(false)
+        
+        // Enabling voice processing affects output sound profile on built in speaker.
+        try audioEngine.outputNode.setVoiceProcessingEnabled(true)
+        try audioEngine.inputNode.setVoiceProcessingEnabled(true)
+        audioEngine.inputNode.isVoiceProcessingAGCEnabled = false
+      }
     }
 
     // Might need this later.
@@ -96,6 +103,11 @@ class RealtimeAudio: NSObject {
 
     audioEngine.prepare()
     audioSession.addObserver(self, forKeyPath: "outputVolume", options: .new, context: nil)
+    changeVolume()
+  }
+  
+  private func changeVolume() {
+    if !arguments.recorderEnabled { return }
     audioEngine.mainMixerNode.outputVolume = audioSession.outputVolume
   }
 
@@ -121,7 +133,7 @@ class RealtimeAudio: NSObject {
     switch keyPath {
     case "outputVolume":
       if audioEngine.mainMixerNode.outputVolume != audioSession.outputVolume {
-        audioEngine.mainMixerNode.outputVolume = audioSession.outputVolume
+        changeVolume()
         assert(Thread.isMainThread)
         methodChannel.invokeMethod("echo", arguments: "Volume changing to \(audioSession.outputVolume)")
       }
@@ -348,7 +360,7 @@ extension RealtimeAudio {
     if !audioEngine.isRunning { return }
     if chunkQueue.isEmpty { return }
     if !audioPlayerNode.isPlaying {
-      audioEngine.mainMixerNode.outputVolume = audioSession.outputVolume
+      changeVolume()
       audioPlayerNode.play()
       attachTimers()
       notifyPlayerState(isPaused: false)
@@ -370,15 +382,12 @@ extension RealtimeAudio {
 
   private func stopAudio() {
     if !audioEngine.isRunning { return }
-    chunkThread?.cancel()
-    chunkThread = nil
     isChunkQueueStartedNeeded = true
     detachTimers()
     audioPlayerNode.stop()
 
     while !chunkQueue.isEmpty {
       let chunk = chunkQueue.removeFirst()
-      assert(Thread.isMainThread)
       methodChannel.invokeMethod("chunkPlayed", arguments: chunk.id)
     }
 
@@ -391,47 +400,62 @@ extension RealtimeAudio {
 // Recorder extension.
 extension RealtimeAudio {
   private func startRecording() throws {
-    audioEngine.inputNode.removeTap(onBus: audioBus)
+    if !arguments.recorderEnabled { return }
+    if recorderActiveBus != nil { return }  // Should already be recording.
 
-    let input = audioEngine.inputNode
-    let inputFormat = input.inputFormat(forBus: audioBus)
-    let ratio: Float = Float(inputFormat.sampleRate) / Float(recorderFormat.sampleRate)
-    let converter = try getRecorderConverter(inputFormat, recorderFormat)
+    do {
+      audioEngine.inputNode.removeTap(onBus: recorderPreferredBus)
+      recorderActiveBus = recorderPreferredBus
+      
+      let input = audioEngine.inputNode
+      let inputFormat = input.inputFormat(forBus: recorderPreferredBus)
+      let ratio: Float = Float(inputFormat.sampleRate) / Float(recorderFormat.sampleRate)
+      let converter = try getRecorderConverter(inputFormat, recorderFormat)
 
-    input.installTap(
-      onBus: audioBus,
-      bufferSize: recorderBufferSize,
-      format: inputFormat
-    ) { [weak self] (buffer, time) -> Void in
-      guard let self else { return }
+      input.installTap(
+        onBus: recorderPreferredBus,
+        bufferSize: recorderBufferSize,
+        format: inputFormat
+      ) { [weak self] (buffer, time) -> Void in
+        guard let self else { return }
 
-      let inputCallback: AVAudioConverterInputBlock = { inNumPackets, outStatus in
-        outStatus.pointee = .haveData
-        return buffer
-      }
+        let inputCallback: AVAudioConverterInputBlock = { inNumPackets, outStatus in
+          outStatus.pointee = .haveData
+          return buffer
+        }
 
-      let buffer = AVAudioPCMBuffer(
-        pcmFormat: self.recorderFormat,
-        frameCapacity: UInt32(Float(buffer.frameCapacity) / ratio)
-      )!
+        let buffer = AVAudioPCMBuffer(
+          pcmFormat: self.recorderFormat,
+          frameCapacity: UInt32(Float(buffer.frameCapacity) / ratio)
+        )!
 
-      var error: NSError?
-      let status = converter.convert(to: buffer, error: &error, withInputFrom: inputCallback)
+        var error: NSError?
+        let status = converter.convert(to: buffer, error: &error, withInputFrom: inputCallback)
 
-      if let error {
-        DispatchQueue.main.async {
-          self.methodChannel.invokeMethod("recorderError", arguments: error.localizedDescription)
+        if let error {
+          DispatchQueue.main.async {
+            self.methodChannel.invokeMethod("recorderError", arguments: error.localizedDescription)
+          }
+        }
+
+        if self.recorderFormat.commonFormat == AVAudioCommonFormat.pcmFormatInt16 {
+          self.handleRecorderData(buffer)
         }
       }
-
-      if self.recorderFormat.commonFormat == AVAudioCommonFormat.pcmFormatInt16 {
-        self.handleRecorderData(buffer)
-      }
+      
+      // Need to start it again, if recording was started late.
+      try? audioEngine.start()
+    } catch {
+      recorderActiveBus = nil
+      throw error
     }
   }
 
   private func stopRecording() {
-    audioEngine.inputNode.removeTap(onBus: audioBus)
+    if let bus = recorderActiveBus {
+      audioEngine.inputNode.removeTap(onBus: bus)
+      recorderActiveBus = nil
+    }
     recorderConverter = nil
     notifyRecorderVolume()
   }

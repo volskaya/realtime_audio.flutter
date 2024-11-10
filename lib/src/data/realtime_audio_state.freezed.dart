@@ -21,8 +21,7 @@ RealtimeAudioState _$RealtimeAudioStateFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$RealtimeAudioState {
   bool get isPlaying => throw _privateConstructorUsedError;
-  bool get isPaused => throw _privateConstructorUsedError;
-  bool get isRecording => throw _privateConstructorUsedError; //
+  bool get isPaused => throw _privateConstructorUsedError; //
   int get duration => throw _privateConstructorUsedError;
   int get durationTotal => throw _privateConstructorUsedError; //
   int get chunkCount => throw _privateConstructorUsedError;
@@ -46,7 +45,6 @@ abstract class $RealtimeAudioStateCopyWith<$Res> {
   $Res call(
       {bool isPlaying,
       bool isPaused,
-      bool isRecording,
       int duration,
       int durationTotal,
       int chunkCount});
@@ -69,7 +67,6 @@ class _$RealtimeAudioStateCopyWithImpl<$Res, $Val extends RealtimeAudioState>
   $Res call({
     Object? isPlaying = null,
     Object? isPaused = null,
-    Object? isRecording = null,
     Object? duration = null,
     Object? durationTotal = null,
     Object? chunkCount = null,
@@ -82,10 +79,6 @@ class _$RealtimeAudioStateCopyWithImpl<$Res, $Val extends RealtimeAudioState>
       isPaused: null == isPaused
           ? _value.isPaused
           : isPaused // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isRecording: null == isRecording
-          ? _value.isRecording
-          : isRecording // ignore: cast_nullable_to_non_nullable
               as bool,
       duration: null == duration
           ? _value.duration
@@ -114,7 +107,6 @@ abstract class _$$RealtimeAudioStateImplCopyWith<$Res>
   $Res call(
       {bool isPlaying,
       bool isPaused,
-      bool isRecording,
       int duration,
       int durationTotal,
       int chunkCount});
@@ -135,7 +127,6 @@ class __$$RealtimeAudioStateImplCopyWithImpl<$Res>
   $Res call({
     Object? isPlaying = null,
     Object? isPaused = null,
-    Object? isRecording = null,
     Object? duration = null,
     Object? durationTotal = null,
     Object? chunkCount = null,
@@ -148,10 +139,6 @@ class __$$RealtimeAudioStateImplCopyWithImpl<$Res>
       isPaused: null == isPaused
           ? _value.isPaused
           : isPaused // ignore: cast_nullable_to_non_nullable
-              as bool,
-      isRecording: null == isRecording
-          ? _value.isRecording
-          : isRecording // ignore: cast_nullable_to_non_nullable
               as bool,
       duration: null == duration
           ? _value.duration
@@ -175,7 +162,6 @@ class _$RealtimeAudioStateImpl implements _RealtimeAudioState {
   const _$RealtimeAudioStateImpl(
       {this.isPlaying = false,
       this.isPaused = false,
-      this.isRecording = false,
       this.duration = 0,
       this.durationTotal = 0,
       this.chunkCount = 0});
@@ -189,9 +175,6 @@ class _$RealtimeAudioStateImpl implements _RealtimeAudioState {
   @override
   @JsonKey()
   final bool isPaused;
-  @override
-  @JsonKey()
-  final bool isRecording;
 //
   @override
   @JsonKey()
@@ -206,7 +189,7 @@ class _$RealtimeAudioStateImpl implements _RealtimeAudioState {
 
   @override
   String toString() {
-    return 'RealtimeAudioState(isPlaying: $isPlaying, isPaused: $isPaused, isRecording: $isRecording, duration: $duration, durationTotal: $durationTotal, chunkCount: $chunkCount)';
+    return 'RealtimeAudioState(isPlaying: $isPlaying, isPaused: $isPaused, duration: $duration, durationTotal: $durationTotal, chunkCount: $chunkCount)';
   }
 
   @override
@@ -218,8 +201,6 @@ class _$RealtimeAudioStateImpl implements _RealtimeAudioState {
                 other.isPlaying == isPlaying) &&
             (identical(other.isPaused, isPaused) ||
                 other.isPaused == isPaused) &&
-            (identical(other.isRecording, isRecording) ||
-                other.isRecording == isRecording) &&
             (identical(other.duration, duration) ||
                 other.duration == duration) &&
             (identical(other.durationTotal, durationTotal) ||
@@ -230,8 +211,8 @@ class _$RealtimeAudioStateImpl implements _RealtimeAudioState {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, isPlaying, isPaused, isRecording,
-      duration, durationTotal, chunkCount);
+  int get hashCode => Object.hash(
+      runtimeType, isPlaying, isPaused, duration, durationTotal, chunkCount);
 
   /// Create a copy of RealtimeAudioState
   /// with the given fields replaced by the non-null parameter values.
@@ -254,7 +235,6 @@ abstract class _RealtimeAudioState implements RealtimeAudioState {
   const factory _RealtimeAudioState(
       {final bool isPlaying,
       final bool isPaused,
-      final bool isRecording,
       final int duration,
       final int durationTotal,
       final int chunkCount}) = _$RealtimeAudioStateImpl;
@@ -265,9 +245,7 @@ abstract class _RealtimeAudioState implements RealtimeAudioState {
   @override
   bool get isPlaying;
   @override
-  bool get isPaused;
-  @override
-  bool get isRecording; //
+  bool get isPaused; //
   @override
   int get duration;
   @override

@@ -1,5 +1,7 @@
 struct CreateArguments: FlutterArguments {
   var voiceProcessing: Bool
+  var recorderEnabled: Bool
+  
   var recorderSampleRate: Double
   var playerSampleRate: Double
   

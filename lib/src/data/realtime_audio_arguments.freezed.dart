@@ -41,6 +41,7 @@ mixin _$RealtimeAudioArguments {
   TResult when<TResult extends Object?>({
     required TResult Function(
             bool voiceProcessing,
+            bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
@@ -56,6 +57,7 @@ mixin _$RealtimeAudioArguments {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(
             bool voiceProcessing,
+            bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
@@ -71,6 +73,7 @@ mixin _$RealtimeAudioArguments {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(
             bool voiceProcessing,
+            bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
@@ -151,6 +154,7 @@ abstract class _$$RealtimeAudioArgumentsCreateImplCopyWith<$Res> {
   @useResult
   $Res call(
       {bool voiceProcessing,
+      bool recorderEnabled,
       int recorderSampleRate,
       int playerSampleRate,
       int playerProgressInterval,
@@ -174,6 +178,7 @@ class __$$RealtimeAudioArgumentsCreateImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? voiceProcessing = null,
+    Object? recorderEnabled = null,
     Object? recorderSampleRate = null,
     Object? playerSampleRate = null,
     Object? playerProgressInterval = null,
@@ -184,6 +189,10 @@ class __$$RealtimeAudioArgumentsCreateImplCopyWithImpl<$Res>
       voiceProcessing: null == voiceProcessing
           ? _value.voiceProcessing
           : voiceProcessing // ignore: cast_nullable_to_non_nullable
+              as bool,
+      recorderEnabled: null == recorderEnabled
+          ? _value.recorderEnabled
+          : recorderEnabled // ignore: cast_nullable_to_non_nullable
               as bool,
       recorderSampleRate: null == recorderSampleRate
           ? _value.recorderSampleRate
@@ -214,6 +223,7 @@ class __$$RealtimeAudioArgumentsCreateImplCopyWithImpl<$Res>
 class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
   const _$RealtimeAudioArgumentsCreateImpl(
       {this.voiceProcessing = true,
+      this.recorderEnabled = false,
       this.recorderSampleRate = 24000,
       this.playerSampleRate = 24000,
       this.playerProgressInterval = 10,
@@ -232,11 +242,13 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
   final bool voiceProcessing;
   @override
   @JsonKey()
+  final bool recorderEnabled;
+  @override
+  @JsonKey()
   final int recorderSampleRate;
   @override
   @JsonKey()
   final int playerSampleRate;
-//
   @override
   @JsonKey()
   final int playerProgressInterval;
@@ -252,7 +264,7 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
 
   @override
   String toString() {
-    return 'RealtimeAudioArguments.create(voiceProcessing: $voiceProcessing, recorderSampleRate: $recorderSampleRate, playerSampleRate: $playerSampleRate, playerProgressInterval: $playerProgressInterval, playerVolumeInterval: $playerVolumeInterval, recorderChunkInterval: $recorderChunkInterval)';
+    return 'RealtimeAudioArguments.create(voiceProcessing: $voiceProcessing, recorderEnabled: $recorderEnabled, recorderSampleRate: $recorderSampleRate, playerSampleRate: $playerSampleRate, playerProgressInterval: $playerProgressInterval, playerVolumeInterval: $playerVolumeInterval, recorderChunkInterval: $recorderChunkInterval)';
   }
 
   @override
@@ -262,6 +274,8 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
             other is _$RealtimeAudioArgumentsCreateImpl &&
             (identical(other.voiceProcessing, voiceProcessing) ||
                 other.voiceProcessing == voiceProcessing) &&
+            (identical(other.recorderEnabled, recorderEnabled) ||
+                other.recorderEnabled == recorderEnabled) &&
             (identical(other.recorderSampleRate, recorderSampleRate) ||
                 other.recorderSampleRate == recorderSampleRate) &&
             (identical(other.playerSampleRate, playerSampleRate) ||
@@ -279,6 +293,7 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
   int get hashCode => Object.hash(
       runtimeType,
       voiceProcessing,
+      recorderEnabled,
       recorderSampleRate,
       playerSampleRate,
       playerProgressInterval,
@@ -300,6 +315,7 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
   TResult when<TResult extends Object?>({
     required TResult Function(
             bool voiceProcessing,
+            bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
@@ -310,8 +326,14 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
     required TResult Function() getRecordPermission,
     required TResult Function() requestRecordPermission,
   }) {
-    return create(voiceProcessing, recorderSampleRate, playerSampleRate,
-        playerProgressInterval, playerVolumeInterval, recorderChunkInterval);
+    return create(
+        voiceProcessing,
+        recorderEnabled,
+        recorderSampleRate,
+        playerSampleRate,
+        playerProgressInterval,
+        playerVolumeInterval,
+        recorderChunkInterval);
   }
 
   @override
@@ -319,6 +341,7 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(
             bool voiceProcessing,
+            bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
@@ -329,8 +352,14 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
     TResult? Function()? getRecordPermission,
     TResult? Function()? requestRecordPermission,
   }) {
-    return create?.call(voiceProcessing, recorderSampleRate, playerSampleRate,
-        playerProgressInterval, playerVolumeInterval, recorderChunkInterval);
+    return create?.call(
+        voiceProcessing,
+        recorderEnabled,
+        recorderSampleRate,
+        playerSampleRate,
+        playerProgressInterval,
+        playerVolumeInterval,
+        recorderChunkInterval);
   }
 
   @override
@@ -338,6 +367,7 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(
             bool voiceProcessing,
+            bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
@@ -350,8 +380,14 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
     required TResult orElse(),
   }) {
     if (create != null) {
-      return create(voiceProcessing, recorderSampleRate, playerSampleRate,
-          playerProgressInterval, playerVolumeInterval, recorderChunkInterval);
+      return create(
+          voiceProcessing,
+          recorderEnabled,
+          recorderSampleRate,
+          playerSampleRate,
+          playerProgressInterval,
+          playerVolumeInterval,
+          recorderChunkInterval);
     }
     return orElse();
   }
@@ -411,6 +447,7 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
 abstract class _RealtimeAudioArgumentsCreate extends RealtimeAudioArguments {
   const factory _RealtimeAudioArgumentsCreate(
       {final bool voiceProcessing,
+      final bool recorderEnabled,
       final int recorderSampleRate,
       final int playerSampleRate,
       final int playerProgressInterval,
@@ -422,8 +459,9 @@ abstract class _RealtimeAudioArgumentsCreate extends RealtimeAudioArguments {
       _$RealtimeAudioArgumentsCreateImpl.fromJson;
 
   bool get voiceProcessing;
+  bool get recorderEnabled;
   int get recorderSampleRate;
-  int get playerSampleRate; //
+  int get playerSampleRate;
   int get playerProgressInterval;
   int get playerVolumeInterval;
   int get recorderChunkInterval;
@@ -523,6 +561,7 @@ class _$RealtimeAudioArgumentsDestroyImpl
   TResult when<TResult extends Object?>({
     required TResult Function(
             bool voiceProcessing,
+            bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
@@ -541,6 +580,7 @@ class _$RealtimeAudioArgumentsDestroyImpl
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(
             bool voiceProcessing,
+            bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
@@ -559,6 +599,7 @@ class _$RealtimeAudioArgumentsDestroyImpl
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(
             bool voiceProcessing,
+            bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
@@ -704,6 +745,7 @@ class _$RealtimeAudioArgumentsGetRecordPermissionImpl
   TResult when<TResult extends Object?>({
     required TResult Function(
             bool voiceProcessing,
+            bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
@@ -722,6 +764,7 @@ class _$RealtimeAudioArgumentsGetRecordPermissionImpl
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(
             bool voiceProcessing,
+            bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
@@ -740,6 +783,7 @@ class _$RealtimeAudioArgumentsGetRecordPermissionImpl
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(
             bool voiceProcessing,
+            bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
@@ -882,6 +926,7 @@ class _$RealtimeAudioArgumentsRequestRecordPermissionImpl
   TResult when<TResult extends Object?>({
     required TResult Function(
             bool voiceProcessing,
+            bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
@@ -900,6 +945,7 @@ class _$RealtimeAudioArgumentsRequestRecordPermissionImpl
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(
             bool voiceProcessing,
+            bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
@@ -918,6 +964,7 @@ class _$RealtimeAudioArgumentsRequestRecordPermissionImpl
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(
             bool voiceProcessing,
+            bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,

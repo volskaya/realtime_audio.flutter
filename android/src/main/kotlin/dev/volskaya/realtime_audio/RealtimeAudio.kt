@@ -63,7 +63,7 @@ class RealtimeAudio(
     .build()
 
   private var recorderData: ShortArray? = null
-  private val recorder: AudioRecord
+  private val recorder: AudioRecord?
   private var audioTrack: AudioTrack
   private val audioManager: AudioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
@@ -84,8 +84,8 @@ class RealtimeAudio(
   )
 
   init {
-    recorder = getRecorder()
     audioTrack = getAudioTrack()
+    recorder = if (arguments.recorderEnabled) getRecorder() else null
     audioManager.mode = AudioManager.MODE_NORMAL
     methodChannel.setMethodCallHandler(this)
   }
@@ -95,7 +95,7 @@ class RealtimeAudio(
     stopAudio()
     stopRecording()
     audioTrack.release()
-    recorder.release()
+    recorder?.release()
   }
 
 
@@ -339,15 +339,15 @@ class RealtimeAudio(
 
   //
 
-  private fun startRecording() {
-    if (recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) return
 
+  private fun startRecording() {
+    if (recorder == null || recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) return
     recorder.startRecording()
     onPeriodicNotification(recorder)
   }
 
   private fun stopRecording() {
-    if (recorder.recordingState == AudioRecord.RECORDSTATE_STOPPED) return
+    if (recorder == null || recorder.recordingState == AudioRecord.RECORDSTATE_STOPPED) return
 
     recorder.stop()
     notifyRecorderVolume()

@@ -32,6 +32,7 @@ import 'package:uuid/uuid.dart';
 class RealtimeAudio {
   RealtimeAudio({
     this.voiceProcessing = true,
+    this.recorderEnabled = false,
     //
     this.recorderSampleRate = 24000,
     this.playerSampleRate = 24000,
@@ -44,6 +45,7 @@ class RealtimeAudio {
   }
 
   final bool voiceProcessing;
+  final bool recorderEnabled;
   final int recorderSampleRate;
   final int playerSampleRate;
   final int playerProgressInterval;
@@ -279,7 +281,8 @@ class RealtimeAudio {
 
   Future<void> _initialize() => _semaphore.withLock(() async {
         final RealtimeAudioResponseCreate response = await RealtimeAudioArguments.create(
-          voiceProcessing: true,
+          voiceProcessing: voiceProcessing,
+          recorderEnabled: recorderEnabled,
           recorderSampleRate: recorderSampleRate,
           playerSampleRate: playerSampleRate,
           playerProgressInterval: playerProgressInterval,
