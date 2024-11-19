@@ -57,6 +57,10 @@ class RealtimeAudioPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Req
 
     when (call.method) {
       "create" -> {
+        if (!realtimeAudios.isEmpty()) {
+          throw Error("Only 1 active RealtimeAudio instance allowed at a time.")
+        }
+
         val context = this.context ?: return
 
         val arguments = CreateArguments.fromMethodCall(call)

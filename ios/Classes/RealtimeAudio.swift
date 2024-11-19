@@ -251,7 +251,7 @@ extension RealtimeAudio {
     } catch {
       let flutterError = FlutterError(
         code: "INTERNAL",
-        message: error.localizedDescription,
+        message: (error as? TextError)?.message ?? error.localizedDescription,
         details: nil
       )
 

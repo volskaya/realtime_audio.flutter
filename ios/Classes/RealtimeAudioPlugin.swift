@@ -29,7 +29,7 @@ import Foundation
     } catch {
       let flutterError = FlutterError(
         code: "INTERNAL",
-        message: error.localizedDescription,
+        message: (error as? TextError)?.message ?? error.localizedDescription,
         details: nil
       )
 
@@ -42,6 +42,8 @@ import Foundation
 
     switch call.method {
     case "create":
+      if !realtimeAudioInstances.isEmpty { throw TextError("Only 1 active RealtimeAudio instance allowed at a time.") }
+
       let arguments: CreateArguments = try call.toArguments()
       let id = UUID().uuidString
       let channel = FlutterMethodChannel(
