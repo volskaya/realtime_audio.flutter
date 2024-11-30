@@ -1,5 +1,5 @@
 name: realtime_audio
-description: "Audio package for realtime APIs like OpenAI Realtime or HumeAI Voice."
+description: "Audio package to handle streaming chunk playback & recording to use with realtime APIs like OpenAI Realtime, HumeAI Voice and others."
 version: 0.0.6
 homepage: "https://github.com/volskaya/realtime_audio.flutter"
 
