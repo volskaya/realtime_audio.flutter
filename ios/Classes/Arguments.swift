@@ -1,4 +1,6 @@
 struct CreateArguments: FlutterArguments {
+  var isFirstCreate: Bool
+  
   var voiceProcessing: Bool
   var recorderEnabled: Bool
   

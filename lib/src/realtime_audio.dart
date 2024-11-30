@@ -57,6 +57,8 @@ class RealtimeAudio {
   static const _staticChannel = MethodChannel('dev.volskaya.RealtimeAudio/plugin');
   static const _uuid = Uuid();
 
+  static bool _isFirstCreate = true;
+
   final _semaphore = Semaphore(1);
   final List<RealtimeAudioQueueEntry> _queue = [];
   final Set<String> _queuedChunks = {};
@@ -280,7 +282,11 @@ class RealtimeAudio {
   //
 
   Future<void> _initialize() => _semaphore.withLock(() async {
+        final bool isFirstCreate = _isFirstCreate;
+        _isFirstCreate = false;
+
         final RealtimeAudioResponseCreate response = await RealtimeAudioArguments.create(
+          isFirstCreate: isFirstCreate,
           voiceProcessing: voiceProcessing,
           recorderEnabled: recorderEnabled,
           recorderSampleRate: recorderSampleRate,

@@ -44,6 +44,7 @@ class RealtimeAudioPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Req
 
   override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
     methodChannel?.setMethodCallHandler(null)
+    disposeAllInstances()
   }
 
   override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -57,13 +58,17 @@ class RealtimeAudioPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Req
 
     when (call.method) {
       "create" -> {
+        val context = this.context ?: return
+        val arguments = CreateArguments.fromMethodCall(call)
+
         if (!realtimeAudios.isEmpty()) {
-          throw Error("Only 1 active RealtimeAudio instance allowed at a time.")
+          if (arguments.isFirstCreate) {
+            disposeAllInstances()
+          } else {
+            throw Error("Only 1 active RealtimeAudio instance allowed at a time.")
+          }
         }
 
-        val context = this.context ?: return
-
-        val arguments = CreateArguments.fromMethodCall(call)
         val id = UUID.randomUUID().toString()
         val methodChannel = MethodChannel(
           binaryMessenger,
@@ -118,6 +123,14 @@ class RealtimeAudioPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Req
 
     if (!isValueCoroutine) {
       value?.let { result.success(it) } ?: run { result.notImplemented() }
+    }
+  }
+
+  private fun disposeAllInstances() {
+    runCatching {
+      val instances = realtimeAudios.values.toList()
+      realtimeAudios.clear()
+      instances.forEach { it.dispose() }
     }
   }
 

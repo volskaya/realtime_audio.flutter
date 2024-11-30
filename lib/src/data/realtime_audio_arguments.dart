@@ -8,6 +8,7 @@ part 'realtime_audio_arguments.g.dart';
 @freezed
 class RealtimeAudioArguments with _$RealtimeAudioArguments {
   const factory RealtimeAudioArguments.create({
+    required bool isFirstCreate,
     @Default(true) bool voiceProcessing,
     @Default(false) bool recorderEnabled,
     @Default(24000) int recorderSampleRate,

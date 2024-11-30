@@ -118,10 +118,10 @@ class RealtimeAudio: NSObject {
     try? audioSession.setActive(false)
   }
 
-  func dispose() {
+  func dispose() throws {
     methodChannel.setMethodCallHandler(nil)
-    try? stop()
-    try? audioSession.setActive(false)
+    try stop()
+    try audioSession.setActive(false)
   }
 
   override func observeValue(

@@ -22,6 +22,10 @@ import Foundation
 
     super.init()
   }
+  
+  public func detachFromEngine(for registrar: any FlutterPluginRegistrar) {
+    disposeAllInstances()
+  }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     do {
@@ -42,9 +46,16 @@ import Foundation
 
     switch call.method {
     case "create":
-      if !realtimeAudioInstances.isEmpty { throw TextError("Only 1 active RealtimeAudio instance allowed at a time.") }
-
       let arguments: CreateArguments = try call.toArguments()
+
+      if !realtimeAudioInstances.isEmpty {
+        if arguments.isFirstCreate {
+          disposeAllInstances()
+        } else {
+          throw TextError("Only 1 active RealtimeAudio instance allowed at a time.")
+        }
+      }
+
       let id = UUID().uuidString
       let channel = FlutterMethodChannel(
         name: "dev.volskaya.RealtimeAudio/engines/\(id)",
@@ -63,7 +74,7 @@ import Foundation
     case "destroy":
       let arguments: DestroyArguments = try call.toArguments()
       if let engine = realtimeAudioInstances.removeValue(forKey: arguments.id) {
-        engine.dispose()
+        try? engine.dispose()
         value = try DestroyResponse().toJsonMap()
       } else {
         throw TextError("Engine not found for id: \(arguments.id).")
@@ -109,6 +120,14 @@ import Foundation
       result(value)
     } else {
       result(FlutterMethodNotImplemented)
+    }
+  }
+  
+  private func disposeAllInstances() {
+    let instances = realtimeAudioInstances
+    realtimeAudioInstances = [:]
+    for instance in instances.values {
+      try? instance.dispose()
     }
   }
 

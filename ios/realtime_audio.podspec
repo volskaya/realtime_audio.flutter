@@ -4,8 +4,8 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'realtime_audio'
-  s.version          = '0.1.0'
-  s.summary          = 'Realtime audio plugin for Flutter.'
+  s.version          = '0.0.6'
+  s.summary          = 'Audio package to handle streaming chunk playback & recording to use with realtime APIs like OpenAI Realtime, HumeAI Voice and others.'
   s.description      = <<-DESC
   Realtime audio plugin for Flutter.
                        DESC

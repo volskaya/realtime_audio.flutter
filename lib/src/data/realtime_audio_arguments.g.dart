@@ -9,6 +9,7 @@ part of 'realtime_audio_arguments.dart';
 _$RealtimeAudioArgumentsCreateImpl _$$RealtimeAudioArgumentsCreateImplFromJson(
         Map<String, dynamic> json) =>
     _$RealtimeAudioArgumentsCreateImpl(
+      isFirstCreate: json['isFirstCreate'] as bool,
       voiceProcessing: json['voiceProcessing'] as bool? ?? true,
       recorderEnabled: json['recorderEnabled'] as bool? ?? false,
       recorderSampleRate:
@@ -26,6 +27,7 @@ _$RealtimeAudioArgumentsCreateImpl _$$RealtimeAudioArgumentsCreateImplFromJson(
 Map<String, dynamic> _$$RealtimeAudioArgumentsCreateImplToJson(
         _$RealtimeAudioArgumentsCreateImpl instance) =>
     <String, dynamic>{
+      'isFirstCreate': instance.isFirstCreate,
       'voiceProcessing': instance.voiceProcessing,
       'recorderEnabled': instance.recorderEnabled,
       'recorderSampleRate': instance.recorderSampleRate,

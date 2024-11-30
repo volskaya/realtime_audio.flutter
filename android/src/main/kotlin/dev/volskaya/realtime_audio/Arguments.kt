@@ -3,6 +3,7 @@ package dev.volskaya.realtime_audio
 import io.flutter.plugin.common.MethodCall
 
 data class CreateArguments(
+  val isFirstCreate: Boolean,
   val voiceProcessing: Boolean,
   val recorderEnabled: Boolean,
   val playerSampleRate: Int,
@@ -14,6 +15,7 @@ data class CreateArguments(
   companion object {
     fun fromMethodCall(call: MethodCall): CreateArguments {
       return CreateArguments(
+        isFirstCreate = call.argument<Boolean>("isFirstCreate") ?: throw Error("Missing isFirstCreate."),
         voiceProcessing = call.argument<Boolean>("voiceProcessing") ?: throw Error("Missing voiceProcessing."),
         recorderEnabled = call.argument<Boolean>("recorderEnabled") ?: throw Error("Missing recorderEnabled."),
         playerSampleRate = call.argument<Int>("playerSampleRate") ?: throw Error("Missing playerSampleRate."),
