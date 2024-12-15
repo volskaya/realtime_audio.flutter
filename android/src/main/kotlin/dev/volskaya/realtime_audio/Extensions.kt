@@ -12,6 +12,12 @@ import kotlin.math.sqrt
 
 fun Looper.isMainLooper(): Boolean = this == Looper.getMainLooper()
 
+fun AudioFormat.getBitRatio(): Int = when (encoding) {
+  AudioFormat.ENCODING_PCM_8BIT -> 1
+  AudioFormat.ENCODING_PCM_16BIT -> 2
+  else -> 1
+}
+
 fun Timer.schedule(period: Long, run: () -> Unit): Timer {
   this.schedule(object : TimerTask() {
     override fun run() {

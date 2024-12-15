@@ -1,6 +1,6 @@
 PODS:
   - Flutter (1.0.0)
-  - realtime_audio (0.1.0):
+  - realtime_audio (0.0.1):
     - Flutter
 
 DEPENDENCIES:
@@ -15,7 +15,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
-  realtime_audio: 8d605a58640f94e54c82765543921ccccebfe52b
+  realtime_audio: 0472de854557762e29dbed05f022127aefce9bd1
 
 PODFILE CHECKSUM: 819463e6a0290f5a72f145ba7cde16e8b6ef0796
 

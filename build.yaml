@@ -2,8 +2,10 @@ targets:
   $default:
     sources:
       exclude:
-        - "**/example/**"
+        - "example/**"
     builders:
       json_serializable:
         options:
           explicit_to_json: true
+          any_map: true
+          checked: false
