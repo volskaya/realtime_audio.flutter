@@ -1,15 +1,18 @@
 # 🎵 Realtime Audio
 
-`RealtimeAudio` is a Flutter package that handles audio recording and playback of data chunks from real-time sources, like OpenAI Realtime API or HumeAI Voice.
+`RealtimeAudio` is a Flutter package that handles audio recording and playback of data chunks from real-time sources, like OpenAI Realtime, ElevenLabs or HumeAI Voice.
 
 ## ✨ Features
 
 - 🎤 Audio recording with variable chunk length in milliseconds.
 - 🔊 Audio playback of data chunks.
 - ⏱️ Duration tracking of audio chunks.
-- 🔒 Necessary permission & audio session handling.
 - ⏸️ Pause support.
-- 🎛️ Voice processing on iOS.
+- 📊 Volume tracking in dBFS.
+- 🎛️ Voice isolation and other processing on iOS.
+- 📱 iOS audio session handling for max volume.
+- 🤖🍏🍎 Android, iOS, and macOS support.
+- ✂️ Audio response truncation support.
 
 ## 📖 Usage
 
@@ -20,3 +23,43 @@ After initializing the `RealtimeAudio` object, you can start recording and playi
 Audio will be played back in real-time, as soon as the first chunk is queued with `queueChunk()`.
 
 See the example project for a complete example.
+
+## 🔒 Permissions
+
+### 🤖 Android
+
+- **Add Permissions to `AndroidManifest.xml`**:
+
+  ```xml
+  <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+  ```
+
+### 🍏 iOS
+
+- **Add Permissions to `Info.plist`**:
+  Open your `Info.plist` file and add the following keys:
+
+  ```xml
+  <key>NSMicrophoneUsageDescription</key>
+  <string>We need access to the microphone to record audio.</string>
+  ```
+
+### 🍎 macOS
+
+- **Add Permissions to `Info.plist`**:
+  Open your `Info.plist` file and add the following keys:
+
+  ```xml
+  <key>NSMicrophoneUsageDescription</key>
+  <string>We need access to the microphone to record audio.</string>
+  ```
+
+- **Add Entitlements to release and debug `macos/*.entitlements`**:
+  Open your `macos/*.entitlements` file and add the following:
+
+  ```xml
+  <key>com.apple.security.device.audio-input</key>
+  <true/>
+  ```
+
+  Can also do this through XCode by selecting the target, then `Signing & Capabilities`, then checking `Audio Input`.
