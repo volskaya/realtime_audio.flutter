@@ -1,10 +1,6 @@
-#
-# To learn more about a Podspec see http://guides.cocoapods.org/syntax/podspec.html.
-# Run `pod lib lint sound_stream.podspec' to validate before publishing.
-#
 Pod::Spec.new do |s|
   s.name             = 'realtime_audio'
-  s.version          = '0.0.6'
+  s.version          = '0.0.1'
   s.summary          = 'Audio package to handle streaming chunk playback & recording to use with realtime APIs like OpenAI Realtime, HumeAI Voice and others.'
   s.description      = <<-DESC
   Realtime audio plugin for Flutter.
@@ -16,8 +12,6 @@ Pod::Spec.new do |s|
   s.source_files = 'Classes/**/*'
   s.dependency 'Flutter'
   s.platform = :ios, '15.0'
-
-  # Flutter.framework does not contain a i386 slice. Only x86_64 simulators are supported.
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
   s.swift_version = '5.0'
 end

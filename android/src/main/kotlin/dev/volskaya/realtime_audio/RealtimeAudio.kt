@@ -14,8 +14,15 @@ import android.media.MediaRecorder
 import android.os.Handler
 import android.os.Looper
 import androidx.core.app.ActivityCompat
+import dev.volskaya.realtime_audio.utils.ChunkAudioTrack
+import dev.volskaya.realtime_audio.utils.ChunkAudioEventListener
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.Timer
@@ -46,7 +53,8 @@ class RealtimeAudio(
   private val arguments: CreateArguments,
   private val context: Context,
   private val methodChannel: MethodChannel,
-) : MethodChannel.MethodCallHandler, OnPlaybackPositionUpdateListener, OnRecordPositionUpdateListener {
+) : MethodChannel.MethodCallHandler, OnPlaybackPositionUpdateListener, OnRecordPositionUpdateListener,
+  ChunkAudioEventListener {
 
   private val mainLooperHandler = Handler(Looper.getMainLooper())
 
@@ -64,15 +72,13 @@ class RealtimeAudio(
 
   private var recorderData: ShortArray? = null
   private val recorder: AudioRecord?
-  private var audioTrack: AudioTrack
+  private var audioTrack: ChunkAudioTrack
   private val audioManager: AudioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
   private var isRunning = false
-  private val chunkQueue: MutableList<QueuedChunk> = mutableListOf()
-  private var chunkThread: Thread? = null
-  private val chunkSampleTime: Int get() = chunkQueue.lastOrNull()?.let { it.offset + it.data.size } ?: 0
+  private var shouldBeRunning = false
+  private var shouldBePaused = false
 
-  private var isChunkQueueStartedNeeded = true
   private var playerProgressTimer: Timer? = null
   private var playerVolumeTimer: Timer? = null
   private var state: RealtimeAudioState = RealtimeAudioState(
@@ -84,8 +90,12 @@ class RealtimeAudio(
   )
 
   init {
-    audioTrack = getAudioTrack()
+    val audioSessionId = audioManager.generateAudioSessionId()
+
+    //setPerformanceMode
+
     recorder = if (arguments.recorderEnabled) getRecorder() else null
+    audioTrack = getAudioTrack(audioSessionId)
     audioManager.mode = AudioManager.MODE_NORMAL
     methodChannel.setMethodCallHandler(this)
   }
@@ -120,7 +130,13 @@ class RealtimeAudio(
 
   override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
     runCatching { handleMethodCallSafe(call, result) }
-      .onFailure { result.error("INTERNAL", it.localizedMessage ?: "Undefined message.", it.stackTraceToString()) }
+      .onFailure {
+        result.error(
+          "INTERNAL",
+          it.localizedMessage ?: "Undefined message.",
+          it.stackTraceToString()
+        )
+      }
   }
 
   private fun handleMethodCallSafe(call: MethodCall, result: MethodChannel.Result) {
@@ -135,6 +151,7 @@ class RealtimeAudio(
       }
 
       "clearQueue" -> {
+        value = mapOf("chunk" to audioTrack.getCurrentChunkProps())
         stopAudio()
       }
 
@@ -160,8 +177,8 @@ class RealtimeAudio(
     var seconds = 0.0
 
     runCatching {
-      secondsTotal = chunkSampleTime.toDouble() / audioTrack.sampleRate
-      seconds = audioTrack.playbackHeadPosition.toDouble() * 2.0 / audioTrack.sampleRate
+      secondsTotal = audioTrack.totalSampleTime.toDouble() / audioTrack.sampleRate
+      seconds = audioTrack.playbackHeadPosition.toDouble() / audioTrack.sampleRate
     }
 
     state.duration = (seconds * 1000).roundToInt()
@@ -171,7 +188,7 @@ class RealtimeAudio(
   }
 
   private fun notifyPlayerState() {
-    state.chunkCount = chunkQueue.size
+    state.chunkCount = audioTrack.queue.size
     state.isPaused = audioTrack.playState == AudioTrack.PLAYSTATE_PAUSED
     state.isPlaying =
       audioTrack.playState == AudioTrack.PLAYSTATE_PAUSED || audioTrack.playState == AudioTrack.PLAYSTATE_PLAYING
@@ -182,9 +199,9 @@ class RealtimeAudio(
   private fun notifyPlayerVolume() {
     val dbfs = runCatching {
       getDbfsFromChunks(
-        chunkQueue,
-        audioTrack.playbackHeadPosition * 2,
-        (audioTrack.sampleRate * 0.3).toInt()
+        audioTrack.queue,
+        audioTrack.dataPlaybackHeadPosition,
+        (audioTrack.dataSampleRate * 0.3).toInt()
       )
     }.getOrNull() ?: -96.0
 
@@ -197,8 +214,8 @@ class RealtimeAudio(
 
   //
 
-  private fun getAudioTrack() =
-    AudioTrack(
+  private fun getAudioTrack(audioSessionId: Int? = null) =
+    ChunkAudioTrack(
       AudioAttributes.Builder()
         .setLegacyStreamType(AudioManager.STREAM_MUSIC)
         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
@@ -207,7 +224,8 @@ class RealtimeAudio(
       playerOutputFormat,
       playerOutputFormat.getMinBufferSizeTrack(),
       AudioTrack.MODE_STREAM,
-      AudioManager.AUDIO_SESSION_ID_GENERATE
+      audioSessionId ?: AudioManager.AUDIO_SESSION_ID_GENERATE,
+      this
     )
 
   private fun getRecorder(): AudioRecord {
@@ -221,8 +239,11 @@ class RealtimeAudio(
     val recorderChunkBufferSize =
       (recorderFormat.sampleRate.toDouble() * (arguments.recorderChunkInterval.toDouble() / 1000)).roundToInt()
 
+    assert(recorderFormat.encoding == AudioFormat.ENCODING_PCM_16BIT)
+    assert(recorderFormat.encoding == playerOutputFormat.encoding)
+
     val minBufferSize = recorderFormat.getMinBufferSizeRecord()
-    val bufferSize = minBufferSize * 2
+    val bufferSize = minBufferSize * recorderFormat.getBitRatio()
 
     return AudioRecord(
       MediaRecorder.AudioSource.MIC,
@@ -239,67 +260,30 @@ class RealtimeAudio(
 
   //
 
+  override fun onChunkQueued(id: String) = methodChannel.invokeMethod("chunkQueued", id)
+  override fun onChunkPlayed(id: String) = methodChannel.invokeMethod("chunkPlayed", id)
+  override fun onChunkQueueStarted(id: String) = methodChannel.invokeMethod("chunkQueueStarted", id)
+  override fun onChunkQueueEnded() = stopAudio()
+
+  //
+
   private fun queueAudio(id: String, data: ByteArray) {
     if (data.isEmpty()) return
 
-    val queuedChunkEntry = QueuedChunk(
-      id = id,
-      data = data,
-      offset = chunkSampleTime,
-    )
-
-    chunkQueue.add(queuedChunkEntry)
-    methodChannel.invokeMethod("chunkQueued", id)
-
+    audioTrack.queue(id, data)
     if (audioTrack.playState != AudioTrack.PLAYSTATE_PAUSED) {
       playAudio()
     }
   }
 
   private fun playAudio() {
-    if (!isRunning) return
-    if (chunkQueue.isEmpty()) return
+    if (!shouldBeRunning) return
+    if (audioTrack.queue.isEmpty()) return
     if (audioTrack.playState == AudioTrack.PLAYSTATE_PLAYING) return
 
     audioTrack.play()
     attachPlayerTimers()
     notifyPlayerState()
-
-    if (isChunkQueueStartedNeeded && chunkQueue.isNotEmpty()) {
-      isChunkQueueStartedNeeded = false
-      chunkQueue.firstOrNull()?.id?.let {
-        methodChannel.invokeMethod("chunkQueueStarted", it)
-      }
-    }
-
-    // Build the thread only once and destroy it when the player completes
-    // the queue and stops.
-    if (chunkThread != null) return
-    chunkThread = Thread {
-      var resumeOffset: Int? = audioTrack.playbackHeadPosition * 2 - (chunkQueue.firstOrNull()?.offset ?: 0)
-
-      while (chunkQueue.isNotEmpty() && !Thread.interrupted()) {
-        val chunk = chunkQueue.first()
-        val data = runCatching {
-          val pauseOffset = resumeOffset?.also { resumeOffset = null } ?: 0
-          return@runCatching if (pauseOffset > 0) chunk.data.copyOfRange(pauseOffset, chunk.data.size) else chunk.data
-        }.getOrNull() ?: chunk.data
-
-        audioTrack.write(data, 0, data.size)
-
-        if (Thread.interrupted()) break // Audio could have got paused here.
-        val didRemove = chunkQueue.remove(chunk)
-        if (didRemove) {
-          mainLooperHandler.post { methodChannel.invokeMethod("chunkPlayed", chunk.id) }
-        }
-      }
-
-      if (!Thread.interrupted() && chunkQueue.isEmpty()) {
-        mainLooperHandler.post { stopAudio() }
-      }
-    }
-
-    chunkThread?.start()
   }
 
   private fun pauseAudio() {
@@ -307,8 +291,6 @@ class RealtimeAudio(
     if (audioTrack.playState == AudioTrack.PLAYSTATE_PAUSED) return
 
     detachPlayerTimers()
-    chunkThread?.interrupt()
-    chunkThread = null
     audioTrack.pause()
     notifyPlayerState()
   }
@@ -317,19 +299,9 @@ class RealtimeAudio(
     if (audioTrack.playState == AudioTrack.PLAYSTATE_STOPPED) return
 
     detachPlayerTimers()
-    chunkQueue.clear()
-    chunkThread?.interrupt()
-    chunkThread = null
-    isChunkQueueStartedNeeded = true
     runCatching {
       audioTrack.stop()
       audioTrack.flush()
-    }
-
-    while (chunkQueue.isNotEmpty()) {
-      chunkQueue.removeAt(0).let {
-        methodChannel.invokeMethod("chunkPlayed", "${it.id}: ${it.data.size}")
-      }
     }
 
     notifyPlayerState()
@@ -338,7 +310,6 @@ class RealtimeAudio(
   }
 
   //
-
 
   private fun startRecording() {
     if (recorder == null || recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) return
@@ -353,9 +324,9 @@ class RealtimeAudio(
     notifyRecorderVolume()
   }
 
-  private fun handleRecorderData(buffer: ByteArray) {
+  private fun handleRecorderData(buffer: ByteArray, dbfs: Double? = null) {
     methodChannel.invokeMethod("recorderData", buffer)
-    getDbfsFromByteArrays(listOf(buffer), 0, buffer.size).also { notifyRecorderVolume(it) }
+    notifyRecorderVolume(dbfs)
   }
 
   //
@@ -367,41 +338,59 @@ class RealtimeAudio(
     runCatching { recorderData?.let { recorder?.read(it, 0, it.size) } }
   }
 
+  private val recorderScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+  private val recorderScopeMutex = Mutex()
+
   override fun onPeriodicNotification(recorder: AudioRecord?) {
-    val buffer = runCatching<ByteBuffer> {
-      val chunkSize =
-        recorderData?.let { recorder?.read(it, 0, it.size) }?.also { if (it < 0) return@also } ?: return
-      val buffer = ByteBuffer.allocate(chunkSize * 2).also {
-        it.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().put(recorderData)
+    recorderScope.launch {
+      recorderScopeMutex.withLock {
+        if (recorder?.recordingState != AudioRecord.RECORDSTATE_RECORDING) return@withLock
+
+        val bytes = runCatching<ByteBuffer> {
+          val chunkSize = recorderData
+            ?.let { recorder.read(it, 0, it.size) }
+            ?.also { if (it < 0) return@also } ?: return@withLock
+
+          return@runCatching ByteBuffer.allocate(chunkSize * recorderFormat.getBitRatio()).also {
+            it.order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().put(recorderData)
+          }
+        }
+
+        bytes.getOrNull()?.array()?.let { buffer ->
+          val dbfs = getDbfsFromByteArrays(listOf(buffer), 0, buffer.size)
+          scope.launch {
+            handleRecorderData(buffer, dbfs)
+          }
+        }
       }
-
-      return@runCatching buffer
     }
-
-    buffer.getOrNull()?.let { handleRecorderData(it.array()) }
   }
 
   //
 
   private fun start() {
+    shouldBeRunning = true
     isRunning = true
     startRecording()
     playAudio()
   }
 
   private fun pause() {
+    shouldBePaused = true
     pauseAudio()
     stopRecording()
     isRunning = false
   }
 
   private fun resume() {
+    shouldBePaused = false
     isRunning = true
     playAudio()
     startRecording()
   }
 
   private fun stop() {
+    shouldBeRunning = false
     stopAudio()
     stopRecording()
     isRunning = false

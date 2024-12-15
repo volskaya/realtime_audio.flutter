@@ -5,9 +5,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:realtime_audio/src/data/other.dart';
 import 'package:realtime_audio/src/data/realtime_audio_arguments.dart';
+import 'package:realtime_audio/src/data/realtime_audio_instance_response.dart';
 import 'package:realtime_audio/src/data/realtime_audio_queue_entry.dart';
 import 'package:realtime_audio/src/data/realtime_audio_response.dart';
 import 'package:realtime_audio/src/data/realtime_audio_state.dart';
+import 'package:realtime_audio/src/utils/extensions.dart';
 import 'package:realtime_audio/src/utils/semaphore.dart';
 import 'package:uuid/uuid.dart';
 
@@ -258,12 +260,12 @@ class RealtimeAudio {
         _queue.add(queueEntry);
       });
 
-  Future<void> _withInitAndLock(Future<void> Function() fn) async {
+  Future<T?> _withInitAndLock<T>(Future<T?> Function() fn) async {
     await _semaphore.acquire();
     try {
       await isInitialized;
     } catch (_) {} // Ignore.
-    if (_isDisposed) return;
+    if (_isDisposed) return null;
     try {
       return await fn();
     } finally {
@@ -277,7 +279,8 @@ class RealtimeAudio {
   Future<void> pause() => _withInitAndLock(() async => _channel?.invokeMethod('pause'));
   Future<void> resume() => _withInitAndLock(() async => _channel?.invokeMethod('resume'));
   Future<void> stop() async => _withInitAndLock(() async => _channel?.invokeMethod('stop'));
-  Future<void> clearQueue() => _withInitAndLock(() async => _channel?.invokeMethod('clearQueue'));
+  Future<RealtimeAudioInstanceResponseClearQueue?> clearQueue() => _withInitAndLock(
+      () async => _channel?.invokeMethodData('clearQueue', RealtimeAudioInstanceResponseClearQueue.fromJson));
 
   //
 

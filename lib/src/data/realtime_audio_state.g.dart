@@ -6,8 +6,7 @@ part of 'realtime_audio_state.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$RealtimeAudioStateImpl _$$RealtimeAudioStateImplFromJson(
-        Map<String, dynamic> json) =>
+_$RealtimeAudioStateImpl _$$RealtimeAudioStateImplFromJson(Map json) =>
     _$RealtimeAudioStateImpl(
       isPlaying: json['isPlaying'] as bool? ?? false,
       isPaused: json['isPaused'] as bool? ?? false,

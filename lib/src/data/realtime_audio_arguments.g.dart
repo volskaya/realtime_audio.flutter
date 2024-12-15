@@ -7,7 +7,7 @@ part of 'realtime_audio_arguments.dart';
 // **************************************************************************
 
 _$RealtimeAudioArgumentsCreateImpl _$$RealtimeAudioArgumentsCreateImplFromJson(
-        Map<String, dynamic> json) =>
+        Map json) =>
     _$RealtimeAudioArgumentsCreateImpl(
       isFirstCreate: json['isFirstCreate'] as bool,
       voiceProcessing: json['voiceProcessing'] as bool? ?? true,
@@ -39,7 +39,7 @@ Map<String, dynamic> _$$RealtimeAudioArgumentsCreateImplToJson(
     };
 
 _$RealtimeAudioArgumentsDestroyImpl
-    _$$RealtimeAudioArgumentsDestroyImplFromJson(Map<String, dynamic> json) =>
+    _$$RealtimeAudioArgumentsDestroyImplFromJson(Map json) =>
         _$RealtimeAudioArgumentsDestroyImpl(
           id: json['id'] as String,
           $type: json['runtimeType'] as String?,
@@ -53,8 +53,7 @@ Map<String, dynamic> _$$RealtimeAudioArgumentsDestroyImplToJson(
     };
 
 _$RealtimeAudioArgumentsGetRecordPermissionImpl
-    _$$RealtimeAudioArgumentsGetRecordPermissionImplFromJson(
-            Map<String, dynamic> json) =>
+    _$$RealtimeAudioArgumentsGetRecordPermissionImplFromJson(Map json) =>
         _$RealtimeAudioArgumentsGetRecordPermissionImpl(
           $type: json['runtimeType'] as String?,
         );
@@ -66,8 +65,7 @@ Map<String, dynamic> _$$RealtimeAudioArgumentsGetRecordPermissionImplToJson(
     };
 
 _$RealtimeAudioArgumentsRequestRecordPermissionImpl
-    _$$RealtimeAudioArgumentsRequestRecordPermissionImplFromJson(
-            Map<String, dynamic> json) =>
+    _$$RealtimeAudioArgumentsRequestRecordPermissionImplFromJson(Map json) =>
         _$RealtimeAudioArgumentsRequestRecordPermissionImpl(
           $type: json['runtimeType'] as String?,
         );

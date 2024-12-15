@@ -22,10 +22,10 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
+val scope: CoroutineScope get() = MainScope()
 
 class RealtimeAudioPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.RequestPermissionsResultListener,
   ActivityAware {
-  private val scope: CoroutineScope get() = MainScope()
 
   private var context: Context? = null
   private var activity: Activity? = null
@@ -61,7 +61,7 @@ class RealtimeAudioPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Req
         val context = this.context ?: return
         val arguments = CreateArguments.fromMethodCall(call)
 
-        if (!realtimeAudios.isEmpty()) {
+        if (realtimeAudios.isNotEmpty()) {
           if (arguments.isFirstCreate) {
             disposeAllInstances()
           } else {

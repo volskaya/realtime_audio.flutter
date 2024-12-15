@@ -7,7 +7,7 @@ part of 'realtime_audio_response.dart';
 // **************************************************************************
 
 _$RealtimeAudioResponseCreateImpl _$$RealtimeAudioResponseCreateImplFromJson(
-        Map<String, dynamic> json) =>
+        Map json) =>
     _$RealtimeAudioResponseCreateImpl(
       id: json['id'] as String,
       $type: json['runtimeType'] as String?,
@@ -21,7 +21,7 @@ Map<String, dynamic> _$$RealtimeAudioResponseCreateImplToJson(
     };
 
 _$RealtimeAudioResponseDestroyImpl _$$RealtimeAudioResponseDestroyImplFromJson(
-        Map<String, dynamic> json) =>
+        Map json) =>
     _$RealtimeAudioResponseDestroyImpl(
       $type: json['runtimeType'] as String?,
     );
@@ -33,8 +33,7 @@ Map<String, dynamic> _$$RealtimeAudioResponseDestroyImplToJson(
     };
 
 _$RealtimeAudioResponseGetRecordPermissionImpl
-    _$$RealtimeAudioResponseGetRecordPermissionImplFromJson(
-            Map<String, dynamic> json) =>
+    _$$RealtimeAudioResponseGetRecordPermissionImplFromJson(Map json) =>
         _$RealtimeAudioResponseGetRecordPermissionImpl(
           permission: $enumDecode(
               _$RealtimeAudioRecordPermissionEnumMap, json['permission']),
@@ -56,8 +55,7 @@ const _$RealtimeAudioRecordPermissionEnumMap = {
 };
 
 _$RealtimeAudioResponseRequestRecordPermissionImpl
-    _$$RealtimeAudioResponseRequestRecordPermissionImplFromJson(
-            Map<String, dynamic> json) =>
+    _$$RealtimeAudioResponseRequestRecordPermissionImplFromJson(Map json) =>
         _$RealtimeAudioResponseRequestRecordPermissionImpl(
           permission: $enumDecode(
               _$RealtimeAudioRecordPermissionEnumMap, json['permission']),

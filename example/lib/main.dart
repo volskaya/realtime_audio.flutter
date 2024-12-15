@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -16,9 +18,23 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      darkTheme: ThemeData(
         useMaterial3: true,
+        brightness: Brightness.dark,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepPurple,
+          brightness: Brightness.dark,
+          dynamicSchemeVariant: DynamicSchemeVariant.monochrome,
+        ),
+      ),
+      theme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.light,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepPurple,
+          brightness: Brightness.light,
+          dynamicSchemeVariant: DynamicSchemeVariant.monochrome,
+        ),
       ),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
@@ -35,6 +51,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  static const _printTimeDifferences = false;
+
   RealtimeAudio? audioEngine;
   List<StreamSubscription<dynamic>>? _subscriptions;
   RealtimeAudioState _state = const RealtimeAudioState();
@@ -61,27 +79,48 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {});
   }
 
+  DateTime? _lastRecorderChunk;
+  DateTime? _lastPlayerChunk;
+
   void _handleRecorderChunk(Uint8List chunk) {
-    if (_previewData != null) {
-      _previewData!.add(chunk);
+    if (_previewData == null) return;
+    if (_printTimeDifferences) {
+      if (_lastRecorderChunk != null) {
+        final diff = DateTime.now().difference(_lastRecorderChunk!);
+        final chunkMs = chunk.length / 48000 * 1000;
+        print("Chunk time: ${diff.inMilliseconds}ms, chunkMs: $chunkMs");
+      }
+      _lastRecorderChunk = DateTime.now();
     }
+    _previewData?.add(chunk);
+  }
+
+  void _handlePlayerState(RealtimeAudioState state) {
+    if (_printTimeDifferences) {
+      if (_lastPlayerChunk != null) {
+        final diff = DateTime.now().difference(_lastPlayerChunk!);
+        print("Player time: ${diff.inMilliseconds}ms");
+      }
+      _lastPlayerChunk = DateTime.now();
+    }
+    setState(() => _state = state);
   }
 
   Future<void> createAudioEngine({
     bool recorderEnabled = false,
   }) async {
-    audioEngine = RealtimeAudio(recorderEnabled: recorderEnabled);
-    await audioEngine!.isInitialized;
-
-    _subscriptions = [
-      audioEngine!.stateStream.listen((event) => setState(() => _state = event)),
-      audioEngine!.recorderVolumeStream.listen((event) => setState(() => _recorderVolume = event)),
-      audioEngine!.playerVolumeStream.listen((event) => setState(() => _playerVolume = event)),
-      audioEngine!.recorderStream.listen(_handleRecorderChunk),
-    ];
+    final audioEngineNew = RealtimeAudio(recorderEnabled: recorderEnabled);
+    await audioEngineNew.isInitialized;
 
     setState(() {
+      audioEngine = audioEngineNew;
       _state = audioEngine!.state;
+      _subscriptions = [
+        audioEngine!.stateStream.listen(_handlePlayerState),
+        audioEngine!.recorderVolumeStream.listen((event) => setState(() => _recorderVolume = event)),
+        audioEngine!.playerVolumeStream.listen((event) => setState(() => _playerVolume = event)),
+        audioEngine!.recorderStream.listen(_handleRecorderChunk),
+      ];
     });
   }
 
@@ -94,7 +133,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> clearQueue() async {
-    audioEngine?.clearQueue();
+    final resp = await audioEngine?.clearQueue();
+    print(resp);
+    print("Stopped at: ${resp?.chunk?.elapsed}, chunk: ${resp?.chunk?.chunkElapsed}");
   }
 
   Future<void> testPlayer() async {
@@ -102,7 +143,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final data = file.buffer.asUint8List();
     final chunks = <Uint8List>[];
 
-    const chunkSize = 24000 * 4;
+    const chunkSize = 24000 * 2 * 4;
     const chunkOffset = 88;
 
     int remaining = data.length;
@@ -155,22 +196,31 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: ListView(
+            clipBehavior: Clip.none,
             children: <Widget>[
+              const SizedBox(height: 24),
+              ProgressIndicator(t: _state.duration / math.max(1, _state.durationTotal)),
+              const SizedBox(height: 16),
+              ProgressIndicator(t: _playerVolumeT),
+              const SizedBox(height: 16),
+              ProgressIndicator(t: _recorderVolumeT),
+              const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => createAudioEngine(recorderEnabled: true),
                 child: const Text('Create Audio Engine (With Recording)'),
               ),
+              const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: () => createAudioEngine(recorderEnabled: false),
                 child: const Text('Create Audio Engine (Without Recording)'),
               ),
+              const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: destroyAudioEngine,
                 child: const Text('Destroy Audio Engine'),
@@ -180,6 +230,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: startPlayer,
                 child: const Text('Start Player'),
               ),
+              const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: stopPlayer,
                 child: const Text('Stop Player'),
@@ -189,6 +240,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: pausePlayer,
                 child: const Text('Pause Player'),
               ),
+              const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: resumePlayer,
                 child: const Text('Resume Player'),
@@ -198,6 +250,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: testPlayer,
                 child: const Text('Queue Something'),
               ),
+              const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: clearQueue,
                 child: const Text('Clear Queue'),
@@ -207,20 +260,17 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: getPermission,
                 child: const Text('Get Permission'),
               ),
+              const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: requestPermission,
                 child: const Text('Request Permission'),
               ),
+              const SizedBox(height: 8),
               ElevatedButton(
                 onPressed: _togglePreviewRecording,
                 child: Text(_previewData != null ? 'End Preview' : 'Start Preview'),
               ),
               const SizedBox(height: 24),
-              ProgressIndicator(t: _state.duration / math.max(1, _state.durationTotal)),
-              const SizedBox(height: 16),
-              ProgressIndicator(t: _playerVolumeT),
-              const SizedBox(height: 16),
-              ProgressIndicator(t: _recorderVolumeT),
             ],
           ),
         ),

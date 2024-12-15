@@ -1,7 +1,13 @@
 name: realtime_audio
-description: "Audio package to handle streaming chunk playback & recording to use with realtime APIs like OpenAI Realtime, HumeAI Voice and others."
-version: 0.0.6
+description: "Audio package to handle streaming chunk playback & recording to use with realtime APIs like OpenAI Realtime, Elevenlabs, HumeAI Voice and others."
+version: 0.0.7
 homepage: "https://github.com/volskaya/realtime_audio.flutter"
+topics:
+  - ai
+  - audio
+  - openai
+  - elevenlabs
+  - hume
 
 environment:
   sdk: ^3.5.3
@@ -31,4 +37,6 @@ flutter:
         package: dev.volskaya.realtime_audio
         pluginClass: RealtimeAudioPlugin
       ios:
+        pluginClass: RealtimeAudioPlugin
+      macos:
         pluginClass: RealtimeAudioPlugin
