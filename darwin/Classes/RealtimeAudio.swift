@@ -74,6 +74,7 @@ class RealtimeAudio: NSObject {
 
     //
 
+    attachObservers()
     audioPlayerNode.setListener(self)
     methodChannel.setMethodCallHandler(handleFlutterMethod)
 
@@ -81,7 +82,6 @@ class RealtimeAudio: NSObject {
     try attachNodes()
     try audioSession.activate()
 
-    attachObservers()
     changeVolume()
     
     try installTap()
