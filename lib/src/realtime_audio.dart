@@ -285,11 +285,8 @@ class RealtimeAudio {
   //
 
   Future<void> _initialize() => _semaphore.withLock(() async {
-        final bool isFirstCreate = _isFirstCreate;
-        _isFirstCreate = false;
-
         final RealtimeAudioResponseCreate response = await RealtimeAudioArguments.create(
-          isFirstCreate: isFirstCreate,
+          isFirstCreate: _isFirstCreate,
           voiceProcessing: voiceProcessing,
           recorderEnabled: recorderEnabled,
           recorderSampleRate: recorderSampleRate,
@@ -299,6 +296,7 @@ class RealtimeAudio {
           recorderChunkInterval: recorderChunkInterval,
         ).invoke(_staticChannel);
 
+        _isFirstCreate = false;
         _id = response.id;
         _channel = MethodChannel('dev.volskaya.RealtimeAudio/engines/$_id');
         _channel!.setMethodCallHandler(_handleChannel);
