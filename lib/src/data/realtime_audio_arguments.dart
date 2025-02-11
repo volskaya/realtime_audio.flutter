@@ -10,12 +10,14 @@ class RealtimeAudioArguments with _$RealtimeAudioArguments {
   const factory RealtimeAudioArguments.create({
     required bool isFirstCreate,
     @Default(true) bool voiceProcessing,
+    @Default(false) bool backgroundEnabled,
     @Default(false) bool recorderEnabled,
     @Default(24000) int recorderSampleRate,
     @Default(24000) int playerSampleRate,
     @Default(10) int playerProgressInterval,
     @Default(40) int playerVolumeInterval,
     @Default(40) int recorderChunkInterval,
+    @Default(1.0) double backgroundVolume,
   }) = _RealtimeAudioArgumentsCreate;
 
   const factory RealtimeAudioArguments.destroy({

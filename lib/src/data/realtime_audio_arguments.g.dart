@@ -11,6 +11,7 @@ _$RealtimeAudioArgumentsCreateImpl _$$RealtimeAudioArgumentsCreateImplFromJson(
     _$RealtimeAudioArgumentsCreateImpl(
       isFirstCreate: json['isFirstCreate'] as bool,
       voiceProcessing: json['voiceProcessing'] as bool? ?? true,
+      backgroundEnabled: json['backgroundEnabled'] as bool? ?? false,
       recorderEnabled: json['recorderEnabled'] as bool? ?? false,
       recorderSampleRate:
           (json['recorderSampleRate'] as num?)?.toInt() ?? 24000,
@@ -21,6 +22,7 @@ _$RealtimeAudioArgumentsCreateImpl _$$RealtimeAudioArgumentsCreateImplFromJson(
           (json['playerVolumeInterval'] as num?)?.toInt() ?? 40,
       recorderChunkInterval:
           (json['recorderChunkInterval'] as num?)?.toInt() ?? 40,
+      backgroundVolume: (json['backgroundVolume'] as num?)?.toDouble() ?? 1.0,
       $type: json['runtimeType'] as String?,
     );
 
@@ -29,12 +31,14 @@ Map<String, dynamic> _$$RealtimeAudioArgumentsCreateImplToJson(
     <String, dynamic>{
       'isFirstCreate': instance.isFirstCreate,
       'voiceProcessing': instance.voiceProcessing,
+      'backgroundEnabled': instance.backgroundEnabled,
       'recorderEnabled': instance.recorderEnabled,
       'recorderSampleRate': instance.recorderSampleRate,
       'playerSampleRate': instance.playerSampleRate,
       'playerProgressInterval': instance.playerProgressInterval,
       'playerVolumeInterval': instance.playerVolumeInterval,
       'recorderChunkInterval': instance.recorderChunkInterval,
+      'backgroundVolume': instance.backgroundVolume,
       'runtimeType': instance.$type,
     };
 

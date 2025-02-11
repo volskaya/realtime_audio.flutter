@@ -3,7 +3,9 @@ struct CreateArguments: FlutterArguments {
   
   var voiceProcessing: Bool
   var recorderEnabled: Bool
-  
+  var backgroundEnabled: Bool
+  var backgroundVolume: Double
+
   var recorderSampleRate: Double
   var playerSampleRate: Double
   

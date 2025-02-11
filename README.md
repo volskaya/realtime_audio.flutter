@@ -13,6 +13,7 @@
 - 📱 iOS audio session handling for max volume.
 - 🤖🍏🍎 Android, iOS, and macOS support.
 - ✂️ Audio response truncation support.
+- 🎵 Background audio track support.
 
 ## 📖 Usage
 

@@ -109,7 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> createAudioEngine({
     bool recorderEnabled = false,
   }) async {
-    final audioEngineNew = RealtimeAudio(recorderEnabled: recorderEnabled);
+    final audioEngineNew = RealtimeAudio(recorderEnabled: recorderEnabled, backgroundEnabled: true);
     await audioEngineNew.isInitialized;
 
     setState(() {
@@ -179,6 +179,14 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> requestPermission() async {
     final permission = await RealtimeAudio.requestRecordPermission();
     print(permission);
+  }
+
+  Future<void> stopBackground() async => audioEngine?.stopBackground();
+  Future<void> playBackground() async {
+    await audioEngine?.playBackground(
+      (await rootBundle.load('assets/audio/background.wav')).buffer.asUint8List(),
+      loop: true,
+    );
   }
 
   @override
@@ -254,6 +262,16 @@ class _MyHomePageState extends State<MyHomePage> {
               ElevatedButton(
                 onPressed: clearQueue,
                 child: const Text('Clear Queue'),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: playBackground,
+                child: const Text('Test Background'),
+              ),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: stopBackground,
+                child: const Text('Stop Background'),
               ),
               const SizedBox(height: 24),
               ElevatedButton(

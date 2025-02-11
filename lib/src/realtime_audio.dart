@@ -35,6 +35,8 @@ class RealtimeAudio {
   RealtimeAudio({
     this.voiceProcessing = true,
     this.recorderEnabled = false,
+    this.backgroundEnabled = false,
+    this.backgroundVolume = 1.0,
     //
     this.recorderSampleRate = 24000,
     this.playerSampleRate = 24000,
@@ -48,6 +50,8 @@ class RealtimeAudio {
 
   final bool voiceProcessing;
   final bool recorderEnabled;
+  final bool backgroundEnabled;
+  final double backgroundVolume;
   final int recorderSampleRate;
   final int playerSampleRate;
   final int playerProgressInterval;
@@ -284,11 +288,19 @@ class RealtimeAudio {
 
   //
 
+  Future<void> stopBackground() => _withInitAndLock(() async => _channel?.invokeMethod('stopBackground'));
+  Future<void> playBackground(Uint8List data, {bool loop = false}) => _withInitAndLock(
+      () async => _channel?.invokeMethod('playBackground', {'id': _uuid.v4(), 'data': data, 'loop': loop}));
+
+  //
+
   Future<void> _initialize() => _semaphore.withLock(() async {
         final RealtimeAudioResponseCreate response = await RealtimeAudioArguments.create(
           isFirstCreate: _isFirstCreate,
           voiceProcessing: voiceProcessing,
           recorderEnabled: recorderEnabled,
+          backgroundEnabled: backgroundEnabled,
+          backgroundVolume: backgroundVolume,
           recorderSampleRate: recorderSampleRate,
           playerSampleRate: playerSampleRate,
           playerProgressInterval: playerProgressInterval,
