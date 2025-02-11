@@ -35,6 +35,7 @@ class RealtimeAudio: NSObject {
   private let audioEngine = AVAudioEngine()
   private let audioMixerNode = AVAudioMixerNode()
   private let audioPlayerNode: ChunkAudioPlayerNode
+  private let audioBackgroundNode: LoopAudioPlayerNode?
 
   private var playerVolumeTimer: Timer?
   private var playerProgressTimer: Timer?
@@ -48,6 +49,8 @@ class RealtimeAudio: NSObject {
 
   private var shouldBeStarted = false
   private var shouldBePaused = false
+  private var isDisposed = false
+  private var isDeinitialized = false
 
   init(
     id: String,
@@ -70,6 +73,14 @@ class RealtimeAudio: NSObject {
       outputFormat: self.playerOutputFormat
     )
 
+    self.audioBackgroundNode =
+      !arguments.backgroundEnabled
+      ? nil
+      : LoopAudioPlayerNode(
+        inputFormat: self.playerInputFormat,
+        outputFormat: self.playerOutputFormat
+      )
+
     super.init()
 
     //
@@ -83,7 +94,7 @@ class RealtimeAudio: NSObject {
     try audioSession.activate()
 
     changeVolume()
-    
+
     try installTap()
     audioEngine.prepare()
   }
@@ -101,13 +112,19 @@ class RealtimeAudio: NSObject {
     // Might need this later.
     let equalizer = AVAudioUnitEQ(numberOfBands: 2)
     equalizer.bypass = true
+    audioBackgroundNode?.volume = Float(arguments.backgroundVolume)
 
     audioEngine.attach(audioMixerNode)
     audioEngine.attach(audioPlayerNode)
+    if let audioBackgroundNode { audioEngine.attach(audioBackgroundNode) }
     audioEngine.attach(equalizer)
 
     audioEngine.connect(audioPlayerNode, to: equalizer, format: playerOutputFormat)
     audioEngine.connect(equalizer, to: audioMixerNode, fromBus: 0, toBus: 0, format: playerOutputFormat)
+    if let audioBackgroundNode {
+      audioEngine.connect(audioBackgroundNode, to: audioMixerNode, fromBus: 0, toBus: 1, format: playerOutputFormat)
+    }
+
     audioEngine.connect(audioMixerNode, to: audioEngine.mainMixerNode, format: nil)
     audioEngine.connect(audioEngine.mainMixerNode, to: audioEngine.outputNode, format: nil)
   }
@@ -127,7 +144,8 @@ class RealtimeAudio: NSObject {
   @objc private func handleAudioEngineConfigurationChange(notification: NSNotification) {
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }
-      methodChannel.invokeMethod("echo", arguments: "Audio engine configuration changed, need to restart. \(shouldBeStarted)")
+      methodChannel.invokeMethod(
+        "echo", arguments: "Audio engine configuration changed, need to restart. \(shouldBeStarted)")
       do {
         try restart()
       } catch {
@@ -145,6 +163,8 @@ class RealtimeAudio: NSObject {
   }
 
   deinit {
+    isDeinitialized = true
+
     #if os(iOS)
       audioSession.instance.removeObserver(self, forKeyPath: "outputVolume")
     #endif
@@ -158,6 +178,7 @@ class RealtimeAudio: NSObject {
   }
 
   func dispose() throws {
+    isDisposed = true
     methodChannel.setMethodCallHandler(nil)
     detachTimers()
     try stop()
@@ -219,6 +240,8 @@ class RealtimeAudio: NSObject {
   }
 
   private func notifyState() {
+    if isDisposed || isDeinitialized { return }
+
     DispatchQueue.main.async { [weak self] in
       guard let self, let json = try? self.state.toJsonMap() else { return }
       assert(Thread.isMainThread)
@@ -227,6 +250,8 @@ class RealtimeAudio: NSObject {
   }
 
   private func notifyPlayerProgress() {
+    if isDisposed || isDeinitialized { return }
+
     var duration: Int = 0
     var durationTotal: Int = 0
 
@@ -253,6 +278,7 @@ class RealtimeAudio: NSObject {
   private func notifyPlayerState(
     isPaused: Bool?
   ) {
+    if isDisposed || isDeinitialized { return }
     state.chunkCount = audioPlayerNode.queue.count
     state.isPlaying = audioPlayerNode.isPlaying
     if let isPaused { state.isPaused = isPaused }
@@ -260,6 +286,8 @@ class RealtimeAudio: NSObject {
   }
 
   private func notifyPlayerVolume() {
+    if isDisposed || isDeinitialized { return }
+
     var volume: Float = -96.0
 
     if let lastTime = audioPlayerNode.lastRenderTime,
@@ -304,7 +332,7 @@ extension RealtimeAudio {
       guard let arguments = call.arguments as? [String: Any] else {
         throw TextError("Missing arguments for \(call.method)")
       }
-      guard let id = arguments["id"] as? String else { throw TextError("Missing data for: \(call.method).") }
+      guard let id = arguments["id"] as? String else { throw TextError("Missing id for: \(call.method).") }
       guard let data = arguments["data"] as? FlutterStandardTypedData else {
         throw TextError("Missing data for: \(call.method).")
       }
@@ -315,6 +343,7 @@ extension RealtimeAudio {
       value = ["chunk": audioPlayerNode.getCurrentChunkProps()]
       stopAudio()
       break
+    //
     case "start":
       try start()
       break
@@ -327,6 +356,24 @@ extension RealtimeAudio {
     case "stop":
       try stop()
       break
+    //
+    case "playBackground":
+      guard let arguments = call.arguments as? [String: Any] else {
+        throw TextError("Missing arguments for \(call.method)")
+      }
+
+      guard let id = arguments["id"] as? String else { throw TextError("Missing id for: \(call.method).") }
+      guard let loop = (arguments["loop"] as? Bool) else { throw TextError("Missing loop for: \(call.method).") }
+      guard let data = arguments["data"] as? FlutterStandardTypedData else {
+        throw TextError("Missing data for: \(call.method).")
+      }
+
+      try queueBackground(id, [UInt8](data.data), loop: loop)
+      break
+    case "stopBackground":
+      stopBackground()
+      break
+    //
     default:
       value = nil
       break  // Do nothing
@@ -375,7 +422,6 @@ extension RealtimeAudio: ChunkAudioEventListener {
   }
 
   private func stopAudio() {
-    if !audioEngine.isRunning { return }
     detachTimers()
     audioPlayerNode.stop()
 
@@ -458,14 +504,42 @@ extension RealtimeAudio {
 }
 
 extension RealtimeAudio {
+  private func queueBackground(_ id: String, _ data: [UInt8], loop: Bool) throws {
+    guard let audioBackgroundNode else { return }
+    try audioBackgroundNode.queue(id, data, loop: loop)
+    playBackground()
+  }
+
+  private func playBackground() {
+    guard let audioBackgroundNode else { return }
+    if !audioEngine.isRunning { return }
+    if audioBackgroundNode.data?.isEmpty != false { return }
+    changeVolume()
+    audioBackgroundNode.play()
+  }
+
+  private func pauseBackground() {
+    guard let audioBackgroundNode else { return }
+    audioBackgroundNode.pause()
+  }
+
+  private func stopBackground(isRestart: Bool = false) {
+    guard let audioBackgroundNode else { return }
+    audioBackgroundNode.stop(isRestart: isRestart)
+  }
+}
+
+extension RealtimeAudio {
   private func start() throws {
     shouldBeStarted = true
     try audioEngine.start()
+    playBackground()
     playAudio()
   }
 
   private func pause() throws {
     shouldBePaused = true
+    pauseBackground()
     pauseAudio()
     audioEngine.pause()
   }
@@ -473,11 +547,13 @@ extension RealtimeAudio {
   private func resume() throws {
     shouldBePaused = false
     try audioEngine.start()
+    playBackground()
     playAudio()
   }
 
   private func stop() throws {
     shouldBeStarted = false
+    stopBackground()
     stopAudio()
     notifyRecorderVolume()
     audioEngine.stop()
@@ -485,6 +561,7 @@ extension RealtimeAudio {
 
   private func restart() throws {
     if !shouldBeStarted { return }
+    stopBackground(isRestart: true)
     stopAudio()
     audioEngine.stop()
     audioEngine.reset()

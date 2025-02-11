@@ -6,6 +6,8 @@ data class CreateArguments(
   val isFirstCreate: Boolean,
   val voiceProcessing: Boolean,
   val recorderEnabled: Boolean,
+  val backgroundEnabled: Boolean,
+  val backgroundVolume: Double,
   val playerSampleRate: Int,
   val recorderSampleRate: Int,
   val playerProgressInterval: Long,
@@ -18,6 +20,8 @@ data class CreateArguments(
         isFirstCreate = call.argument<Boolean>("isFirstCreate") ?: throw Error("Missing isFirstCreate."),
         voiceProcessing = call.argument<Boolean>("voiceProcessing") ?: throw Error("Missing voiceProcessing."),
         recorderEnabled = call.argument<Boolean>("recorderEnabled") ?: throw Error("Missing recorderEnabled."),
+        backgroundEnabled = call.argument<Boolean>("backgroundEnabled") ?: throw Error("Missing backgroundEnabled."),
+        backgroundVolume = call.argument<Double>("backgroundVolume") ?: throw Error("Missing backgroundVolume."),
         playerSampleRate = call.argument<Int>("playerSampleRate") ?: throw Error("Missing playerSampleRate."),
         recorderSampleRate = call.argument<Int>("recorderSampleRate") ?: throw Error("Missing recorderSampleRate."),
         playerProgressInterval = call.argument<Int>("playerProgressInterval")?.toLong()

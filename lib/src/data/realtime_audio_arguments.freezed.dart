@@ -42,12 +42,14 @@ mixin _$RealtimeAudioArguments {
     required TResult Function(
             bool isFirstCreate,
             bool voiceProcessing,
+            bool backgroundEnabled,
             bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
             int playerVolumeInterval,
-            int recorderChunkInterval)
+            int recorderChunkInterval,
+            double backgroundVolume)
         create,
     required TResult Function(String id) destroy,
     required TResult Function() getRecordPermission,
@@ -59,12 +61,14 @@ mixin _$RealtimeAudioArguments {
     TResult? Function(
             bool isFirstCreate,
             bool voiceProcessing,
+            bool backgroundEnabled,
             bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
             int playerVolumeInterval,
-            int recorderChunkInterval)?
+            int recorderChunkInterval,
+            double backgroundVolume)?
         create,
     TResult? Function(String id)? destroy,
     TResult? Function()? getRecordPermission,
@@ -76,12 +80,14 @@ mixin _$RealtimeAudioArguments {
     TResult Function(
             bool isFirstCreate,
             bool voiceProcessing,
+            bool backgroundEnabled,
             bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
             int playerVolumeInterval,
-            int recorderChunkInterval)?
+            int recorderChunkInterval,
+            double backgroundVolume)?
         create,
     TResult Function(String id)? destroy,
     TResult Function()? getRecordPermission,
@@ -158,12 +164,14 @@ abstract class _$$RealtimeAudioArgumentsCreateImplCopyWith<$Res> {
   $Res call(
       {bool isFirstCreate,
       bool voiceProcessing,
+      bool backgroundEnabled,
       bool recorderEnabled,
       int recorderSampleRate,
       int playerSampleRate,
       int playerProgressInterval,
       int playerVolumeInterval,
-      int recorderChunkInterval});
+      int recorderChunkInterval,
+      double backgroundVolume});
 }
 
 /// @nodoc
@@ -183,12 +191,14 @@ class __$$RealtimeAudioArgumentsCreateImplCopyWithImpl<$Res>
   $Res call({
     Object? isFirstCreate = null,
     Object? voiceProcessing = null,
+    Object? backgroundEnabled = null,
     Object? recorderEnabled = null,
     Object? recorderSampleRate = null,
     Object? playerSampleRate = null,
     Object? playerProgressInterval = null,
     Object? playerVolumeInterval = null,
     Object? recorderChunkInterval = null,
+    Object? backgroundVolume = null,
   }) {
     return _then(_$RealtimeAudioArgumentsCreateImpl(
       isFirstCreate: null == isFirstCreate
@@ -198,6 +208,10 @@ class __$$RealtimeAudioArgumentsCreateImplCopyWithImpl<$Res>
       voiceProcessing: null == voiceProcessing
           ? _value.voiceProcessing
           : voiceProcessing // ignore: cast_nullable_to_non_nullable
+              as bool,
+      backgroundEnabled: null == backgroundEnabled
+          ? _value.backgroundEnabled
+          : backgroundEnabled // ignore: cast_nullable_to_non_nullable
               as bool,
       recorderEnabled: null == recorderEnabled
           ? _value.recorderEnabled
@@ -223,6 +237,10 @@ class __$$RealtimeAudioArgumentsCreateImplCopyWithImpl<$Res>
           ? _value.recorderChunkInterval
           : recorderChunkInterval // ignore: cast_nullable_to_non_nullable
               as int,
+      backgroundVolume: null == backgroundVolume
+          ? _value.backgroundVolume
+          : backgroundVolume // ignore: cast_nullable_to_non_nullable
+              as double,
     ));
   }
 }
@@ -233,12 +251,14 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
   const _$RealtimeAudioArgumentsCreateImpl(
       {required this.isFirstCreate,
       this.voiceProcessing = true,
+      this.backgroundEnabled = false,
       this.recorderEnabled = false,
       this.recorderSampleRate = 24000,
       this.playerSampleRate = 24000,
       this.playerProgressInterval = 10,
       this.playerVolumeInterval = 40,
       this.recorderChunkInterval = 40,
+      this.backgroundVolume = 1.0,
       final String? $type})
       : $type = $type ?? 'create',
         super._();
@@ -252,6 +272,9 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
   @override
   @JsonKey()
   final bool voiceProcessing;
+  @override
+  @JsonKey()
+  final bool backgroundEnabled;
   @override
   @JsonKey()
   final bool recorderEnabled;
@@ -270,13 +293,16 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
   @override
   @JsonKey()
   final int recorderChunkInterval;
+  @override
+  @JsonKey()
+  final double backgroundVolume;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
 
   @override
   String toString() {
-    return 'RealtimeAudioArguments.create(isFirstCreate: $isFirstCreate, voiceProcessing: $voiceProcessing, recorderEnabled: $recorderEnabled, recorderSampleRate: $recorderSampleRate, playerSampleRate: $playerSampleRate, playerProgressInterval: $playerProgressInterval, playerVolumeInterval: $playerVolumeInterval, recorderChunkInterval: $recorderChunkInterval)';
+    return 'RealtimeAudioArguments.create(isFirstCreate: $isFirstCreate, voiceProcessing: $voiceProcessing, backgroundEnabled: $backgroundEnabled, recorderEnabled: $recorderEnabled, recorderSampleRate: $recorderSampleRate, playerSampleRate: $playerSampleRate, playerProgressInterval: $playerProgressInterval, playerVolumeInterval: $playerVolumeInterval, recorderChunkInterval: $recorderChunkInterval, backgroundVolume: $backgroundVolume)';
   }
 
   @override
@@ -288,6 +314,8 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
                 other.isFirstCreate == isFirstCreate) &&
             (identical(other.voiceProcessing, voiceProcessing) ||
                 other.voiceProcessing == voiceProcessing) &&
+            (identical(other.backgroundEnabled, backgroundEnabled) ||
+                other.backgroundEnabled == backgroundEnabled) &&
             (identical(other.recorderEnabled, recorderEnabled) ||
                 other.recorderEnabled == recorderEnabled) &&
             (identical(other.recorderSampleRate, recorderSampleRate) ||
@@ -299,7 +327,9 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
             (identical(other.playerVolumeInterval, playerVolumeInterval) ||
                 other.playerVolumeInterval == playerVolumeInterval) &&
             (identical(other.recorderChunkInterval, recorderChunkInterval) ||
-                other.recorderChunkInterval == recorderChunkInterval));
+                other.recorderChunkInterval == recorderChunkInterval) &&
+            (identical(other.backgroundVolume, backgroundVolume) ||
+                other.backgroundVolume == backgroundVolume));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -308,12 +338,14 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
       runtimeType,
       isFirstCreate,
       voiceProcessing,
+      backgroundEnabled,
       recorderEnabled,
       recorderSampleRate,
       playerSampleRate,
       playerProgressInterval,
       playerVolumeInterval,
-      recorderChunkInterval);
+      recorderChunkInterval,
+      backgroundVolume);
 
   /// Create a copy of RealtimeAudioArguments
   /// with the given fields replaced by the non-null parameter values.
@@ -331,12 +363,14 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
     required TResult Function(
             bool isFirstCreate,
             bool voiceProcessing,
+            bool backgroundEnabled,
             bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
             int playerVolumeInterval,
-            int recorderChunkInterval)
+            int recorderChunkInterval,
+            double backgroundVolume)
         create,
     required TResult Function(String id) destroy,
     required TResult Function() getRecordPermission,
@@ -345,12 +379,14 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
     return create(
         isFirstCreate,
         voiceProcessing,
+        backgroundEnabled,
         recorderEnabled,
         recorderSampleRate,
         playerSampleRate,
         playerProgressInterval,
         playerVolumeInterval,
-        recorderChunkInterval);
+        recorderChunkInterval,
+        backgroundVolume);
   }
 
   @override
@@ -359,12 +395,14 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
     TResult? Function(
             bool isFirstCreate,
             bool voiceProcessing,
+            bool backgroundEnabled,
             bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
             int playerVolumeInterval,
-            int recorderChunkInterval)?
+            int recorderChunkInterval,
+            double backgroundVolume)?
         create,
     TResult? Function(String id)? destroy,
     TResult? Function()? getRecordPermission,
@@ -373,12 +411,14 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
     return create?.call(
         isFirstCreate,
         voiceProcessing,
+        backgroundEnabled,
         recorderEnabled,
         recorderSampleRate,
         playerSampleRate,
         playerProgressInterval,
         playerVolumeInterval,
-        recorderChunkInterval);
+        recorderChunkInterval,
+        backgroundVolume);
   }
 
   @override
@@ -387,12 +427,14 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
     TResult Function(
             bool isFirstCreate,
             bool voiceProcessing,
+            bool backgroundEnabled,
             bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
             int playerVolumeInterval,
-            int recorderChunkInterval)?
+            int recorderChunkInterval,
+            double backgroundVolume)?
         create,
     TResult Function(String id)? destroy,
     TResult Function()? getRecordPermission,
@@ -403,12 +445,14 @@ class _$RealtimeAudioArgumentsCreateImpl extends _RealtimeAudioArgumentsCreate {
       return create(
           isFirstCreate,
           voiceProcessing,
+          backgroundEnabled,
           recorderEnabled,
           recorderSampleRate,
           playerSampleRate,
           playerProgressInterval,
           playerVolumeInterval,
-          recorderChunkInterval);
+          recorderChunkInterval,
+          backgroundVolume);
     }
     return orElse();
   }
@@ -469,12 +513,14 @@ abstract class _RealtimeAudioArgumentsCreate extends RealtimeAudioArguments {
   const factory _RealtimeAudioArgumentsCreate(
       {required final bool isFirstCreate,
       final bool voiceProcessing,
+      final bool backgroundEnabled,
       final bool recorderEnabled,
       final int recorderSampleRate,
       final int playerSampleRate,
       final int playerProgressInterval,
       final int playerVolumeInterval,
-      final int recorderChunkInterval}) = _$RealtimeAudioArgumentsCreateImpl;
+      final int recorderChunkInterval,
+      final double backgroundVolume}) = _$RealtimeAudioArgumentsCreateImpl;
   const _RealtimeAudioArgumentsCreate._() : super._();
 
   factory _RealtimeAudioArgumentsCreate.fromJson(Map<String, dynamic> json) =
@@ -482,12 +528,14 @@ abstract class _RealtimeAudioArgumentsCreate extends RealtimeAudioArguments {
 
   bool get isFirstCreate;
   bool get voiceProcessing;
+  bool get backgroundEnabled;
   bool get recorderEnabled;
   int get recorderSampleRate;
   int get playerSampleRate;
   int get playerProgressInterval;
   int get playerVolumeInterval;
   int get recorderChunkInterval;
+  double get backgroundVolume;
 
   /// Create a copy of RealtimeAudioArguments
   /// with the given fields replaced by the non-null parameter values.
@@ -585,12 +633,14 @@ class _$RealtimeAudioArgumentsDestroyImpl
     required TResult Function(
             bool isFirstCreate,
             bool voiceProcessing,
+            bool backgroundEnabled,
             bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
             int playerVolumeInterval,
-            int recorderChunkInterval)
+            int recorderChunkInterval,
+            double backgroundVolume)
         create,
     required TResult Function(String id) destroy,
     required TResult Function() getRecordPermission,
@@ -605,12 +655,14 @@ class _$RealtimeAudioArgumentsDestroyImpl
     TResult? Function(
             bool isFirstCreate,
             bool voiceProcessing,
+            bool backgroundEnabled,
             bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
             int playerVolumeInterval,
-            int recorderChunkInterval)?
+            int recorderChunkInterval,
+            double backgroundVolume)?
         create,
     TResult? Function(String id)? destroy,
     TResult? Function()? getRecordPermission,
@@ -625,12 +677,14 @@ class _$RealtimeAudioArgumentsDestroyImpl
     TResult Function(
             bool isFirstCreate,
             bool voiceProcessing,
+            bool backgroundEnabled,
             bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
             int playerVolumeInterval,
-            int recorderChunkInterval)?
+            int recorderChunkInterval,
+            double backgroundVolume)?
         create,
     TResult Function(String id)? destroy,
     TResult Function()? getRecordPermission,
@@ -772,12 +826,14 @@ class _$RealtimeAudioArgumentsGetRecordPermissionImpl
     required TResult Function(
             bool isFirstCreate,
             bool voiceProcessing,
+            bool backgroundEnabled,
             bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
             int playerVolumeInterval,
-            int recorderChunkInterval)
+            int recorderChunkInterval,
+            double backgroundVolume)
         create,
     required TResult Function(String id) destroy,
     required TResult Function() getRecordPermission,
@@ -792,12 +848,14 @@ class _$RealtimeAudioArgumentsGetRecordPermissionImpl
     TResult? Function(
             bool isFirstCreate,
             bool voiceProcessing,
+            bool backgroundEnabled,
             bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
             int playerVolumeInterval,
-            int recorderChunkInterval)?
+            int recorderChunkInterval,
+            double backgroundVolume)?
         create,
     TResult? Function(String id)? destroy,
     TResult? Function()? getRecordPermission,
@@ -812,12 +870,14 @@ class _$RealtimeAudioArgumentsGetRecordPermissionImpl
     TResult Function(
             bool isFirstCreate,
             bool voiceProcessing,
+            bool backgroundEnabled,
             bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
             int playerVolumeInterval,
-            int recorderChunkInterval)?
+            int recorderChunkInterval,
+            double backgroundVolume)?
         create,
     TResult Function(String id)? destroy,
     TResult Function()? getRecordPermission,
@@ -956,12 +1016,14 @@ class _$RealtimeAudioArgumentsRequestRecordPermissionImpl
     required TResult Function(
             bool isFirstCreate,
             bool voiceProcessing,
+            bool backgroundEnabled,
             bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
             int playerVolumeInterval,
-            int recorderChunkInterval)
+            int recorderChunkInterval,
+            double backgroundVolume)
         create,
     required TResult Function(String id) destroy,
     required TResult Function() getRecordPermission,
@@ -976,12 +1038,14 @@ class _$RealtimeAudioArgumentsRequestRecordPermissionImpl
     TResult? Function(
             bool isFirstCreate,
             bool voiceProcessing,
+            bool backgroundEnabled,
             bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
             int playerVolumeInterval,
-            int recorderChunkInterval)?
+            int recorderChunkInterval,
+            double backgroundVolume)?
         create,
     TResult? Function(String id)? destroy,
     TResult? Function()? getRecordPermission,
@@ -996,12 +1060,14 @@ class _$RealtimeAudioArgumentsRequestRecordPermissionImpl
     TResult Function(
             bool isFirstCreate,
             bool voiceProcessing,
+            bool backgroundEnabled,
             bool recorderEnabled,
             int recorderSampleRate,
             int playerSampleRate,
             int playerProgressInterval,
             int playerVolumeInterval,
-            int recorderChunkInterval)?
+            int recorderChunkInterval,
+            double backgroundVolume)?
         create,
     TResult Function(String id)? destroy,
     TResult Function()? getRecordPermission,

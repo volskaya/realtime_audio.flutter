@@ -16,6 +16,7 @@ import android.os.Looper
 import androidx.core.app.ActivityCompat
 import dev.volskaya.realtime_audio.utils.ChunkAudioTrack
 import dev.volskaya.realtime_audio.utils.ChunkAudioEventListener
+import dev.volskaya.realtime_audio.utils.LoopAudioTrack
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.CoroutineScope
@@ -72,10 +73,12 @@ class RealtimeAudio(
 
   private var recorderData: ShortArray? = null
   private val recorder: AudioRecord?
-  private var audioTrack: ChunkAudioTrack
+  private val audioTrack: ChunkAudioTrack
+  private val audioBackgroundTrack: LoopAudioTrack?
   private val audioManager: AudioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
   private var isRunning = false
+  private var isDisposed = false
   private var shouldBeRunning = false
   private var shouldBePaused = false
 
@@ -96,14 +99,20 @@ class RealtimeAudio(
 
     recorder = if (arguments.recorderEnabled) getRecorder() else null
     audioTrack = getAudioTrack(audioSessionId)
+    audioBackgroundTrack = if (arguments.backgroundEnabled) getBackgroundTrack(audioSessionId) else null
     audioManager.mode = AudioManager.MODE_NORMAL
     methodChannel.setMethodCallHandler(this)
+
+    audioBackgroundTrack?.setVolume(arguments.backgroundVolume.toFloat())
   }
 
   fun dispose() {
+    isDisposed = true
     detachPlayerTimers()
+    stopBackground()
     stopAudio()
     stopRecording()
+    audioBackgroundTrack?.release()
     audioTrack.release()
     recorder?.release()
   }
@@ -160,6 +169,15 @@ class RealtimeAudio(
       "resume" -> resume()
       "stop" -> stop()
 
+      "stopBackground" -> stopBackground()
+      "playBackground" -> {
+        val id = call.argument<String>("id") ?: throw Error("Missing id for ${call.method}.")
+        val data = call.argument<ByteArray>("data") ?: throw Error("Missing data for ${call.method}.")
+        val loop = call.argument<Boolean>("loop") ?: throw Error("Missing loop for ${call.method}.")
+
+        queueBackground(id, data, loop)
+      }
+
       else -> value = null
     }
 
@@ -169,10 +187,13 @@ class RealtimeAudio(
   //
 
   private fun notifyState() {
+    if (isDisposed) return
     methodChannel.invokeMethod("state", state.toMap())
   }
 
   private fun notifyPlayerProgress() {
+    if (isDisposed) return
+
     var secondsTotal = 0.0
     var seconds = 0.0
 
@@ -188,6 +209,8 @@ class RealtimeAudio(
   }
 
   private fun notifyPlayerState() {
+    if (isDisposed) return
+
     state.chunkCount = audioTrack.queue.size
     state.isPaused = audioTrack.playState == AudioTrack.PLAYSTATE_PAUSED
     state.isPlaying =
@@ -197,6 +220,8 @@ class RealtimeAudio(
   }
 
   private fun notifyPlayerVolume() {
+    if (isDisposed) return
+
     val dbfs = runCatching {
       getDbfsFromChunks(
         audioTrack.queue,
@@ -226,6 +251,19 @@ class RealtimeAudio(
       AudioTrack.MODE_STREAM,
       audioSessionId ?: AudioManager.AUDIO_SESSION_ID_GENERATE,
       this
+    )
+
+  private fun getBackgroundTrack(audioSessionId: Int? = null) =
+    LoopAudioTrack(
+      AudioAttributes.Builder()
+        .setLegacyStreamType(AudioManager.STREAM_MUSIC)
+        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+        .setUsage(AudioAttributes.USAGE_MEDIA)
+        .build(),
+      playerOutputFormat,
+      playerOutputFormat.getMinBufferSizeTrack(),
+      AudioTrack.MODE_STREAM,
+      audioSessionId ?: AudioManager.AUDIO_SESSION_ID_GENERATE,
     )
 
   private fun getRecorder(): AudioRecord {
@@ -277,7 +315,7 @@ class RealtimeAudio(
   }
 
   private fun playAudio() {
-    if (!shouldBeRunning) return
+    if (!shouldBeRunning || shouldBePaused) return
     if (audioTrack.queue.isEmpty()) return
     if (audioTrack.playState == AudioTrack.PLAYSTATE_PLAYING) return
 
@@ -368,6 +406,38 @@ class RealtimeAudio(
 
   //
 
+  private fun queueBackground(id: String, data: ByteArray, loop: Boolean) {
+    audioBackgroundTrack ?: return
+    audioBackgroundTrack.queue(id, data, loop)
+    playBackground()
+  }
+
+  private fun playBackground() {
+    audioBackgroundTrack ?: return
+
+    if (!isRunning) return
+    if (audioBackgroundTrack.playState == AudioTrack.PLAYSTATE_PLAYING) return
+    if (audioBackgroundTrack.bytes?.isNotEmpty() != true) return
+
+    audioBackgroundTrack.play()
+  }
+
+  private fun pauseBackground() {
+    audioBackgroundTrack ?: return
+    audioBackgroundTrack.pause()
+  }
+
+
+  private fun stopBackground() {
+    runCatching {
+      audioBackgroundTrack ?: return
+      audioBackgroundTrack.stop()
+      audioBackgroundTrack.flush()
+    }
+  }
+
+  //
+
   private fun start() {
     shouldBeRunning = true
     isRunning = true
@@ -377,6 +447,7 @@ class RealtimeAudio(
 
   private fun pause() {
     shouldBePaused = true
+    pauseBackground()
     pauseAudio()
     stopRecording()
     isRunning = false
@@ -385,12 +456,14 @@ class RealtimeAudio(
   private fun resume() {
     shouldBePaused = false
     isRunning = true
+    playBackground()
     playAudio()
     startRecording()
   }
 
   private fun stop() {
     shouldBeRunning = false
+    stopBackground()
     stopAudio()
     stopRecording()
     isRunning = false

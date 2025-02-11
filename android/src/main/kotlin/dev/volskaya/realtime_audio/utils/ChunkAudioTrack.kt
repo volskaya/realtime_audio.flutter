@@ -59,9 +59,10 @@ class ChunkAudioTrack(
 
     super.play()
     thread = thread ?: Thread {
+      val currentThread = Thread.currentThread()
       var resumeOffset: Int? = dataPlaybackHeadPosition - (queue.firstOrNull()?.offset ?: 0)
 
-      while (queue.isNotEmpty() && !Thread.interrupted()) {
+      while (thread == currentThread && !currentThread.isInterrupted && queue.isNotEmpty()) {
         val chunk = queue.first()
         val data = runCatching {
           val pauseOffset = resumeOffset?.also { resumeOffset = null } ?: 0
@@ -73,14 +74,15 @@ class ChunkAudioTrack(
 
         write(data, 0, data.size)
 
-        if (Thread.interrupted()) break
+        if (thread != currentThread || currentThread.isInterrupted) break
+
         val didRemove = queue.remove(chunk)
         if (didRemove) {
           handleChunkPlayed(chunk.id)
         }
       }
 
-      if (!Thread.interrupted() && queue.isEmpty()) {
+      if (currentThread == thread && !currentThread.isInterrupted && queue.isEmpty()) {
         handleQueueEnded()
       }
     }.also { it.start() }
