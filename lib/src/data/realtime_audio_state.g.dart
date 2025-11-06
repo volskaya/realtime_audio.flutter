@@ -6,8 +6,8 @@ part of 'realtime_audio_state.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$RealtimeAudioStateImpl _$$RealtimeAudioStateImplFromJson(Map json) =>
-    _$RealtimeAudioStateImpl(
+_RealtimeAudioState _$RealtimeAudioStateFromJson(Map json) =>
+    _RealtimeAudioState(
       isPlaying: json['isPlaying'] as bool? ?? false,
       isPaused: json['isPaused'] as bool? ?? false,
       duration: (json['duration'] as num?)?.toInt() ?? 0,
@@ -15,8 +15,7 @@ _$RealtimeAudioStateImpl _$$RealtimeAudioStateImplFromJson(Map json) =>
       chunkCount: (json['chunkCount'] as num?)?.toInt() ?? 0,
     );
 
-Map<String, dynamic> _$$RealtimeAudioStateImplToJson(
-        _$RealtimeAudioStateImpl instance) =>
+Map<String, dynamic> _$RealtimeAudioStateToJson(_RealtimeAudioState instance) =>
     <String, dynamic>{
       'isPlaying': instance.isPlaying,
       'isPaused': instance.isPaused,
