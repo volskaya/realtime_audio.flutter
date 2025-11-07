@@ -5,7 +5,7 @@ part 'realtime_audio_response.freezed.dart';
 part 'realtime_audio_response.g.dart';
 
 @freezed
-class RealtimeAudioResponse with _$RealtimeAudioResponse {
+abstract class RealtimeAudioResponse with _$RealtimeAudioResponse {
   const factory RealtimeAudioResponse.create({
     required String id,
   }) = RealtimeAudioResponseCreate;

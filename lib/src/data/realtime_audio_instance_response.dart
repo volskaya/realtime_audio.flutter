@@ -4,7 +4,7 @@ part 'realtime_audio_instance_response.freezed.dart';
 part 'realtime_audio_instance_response.g.dart';
 
 @freezed
-class RealtimeAudioInstanceResponse with _$RealtimeAudioInstanceResponse {
+abstract class RealtimeAudioInstanceResponse with _$RealtimeAudioInstanceResponse {
   const factory RealtimeAudioInstanceResponse.clearQueue({
     RealtimeAudioClearQueueChunkData? chunk,
   }) = RealtimeAudioInstanceResponseClearQueue;
@@ -14,7 +14,7 @@ class RealtimeAudioInstanceResponse with _$RealtimeAudioInstanceResponse {
 }
 
 @freezed
-class RealtimeAudioClearQueueChunkData with _$RealtimeAudioClearQueueChunkData {
+abstract class RealtimeAudioClearQueueChunkData with _$RealtimeAudioClearQueueChunkData {
   RealtimeAudioClearQueueChunkData._();
 
   factory RealtimeAudioClearQueueChunkData({
@@ -31,6 +31,9 @@ class RealtimeAudioClearQueueChunkData with _$RealtimeAudioClearQueueChunkData {
 
   //
 
+  @override
   late final chunkElapsed = Duration(milliseconds: (chunkSampleTime / sampleRate * 1000).round());
+
+  @override
   late final elapsed = Duration(milliseconds: (sampleTime / sampleRate * 1000).round());
 }

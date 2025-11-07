@@ -4,7 +4,7 @@ part 'realtime_audio_state.freezed.dart';
 part 'realtime_audio_state.g.dart';
 
 @freezed
-class RealtimeAudioState with _$RealtimeAudioState {
+abstract class RealtimeAudioState with _$RealtimeAudioState {
   const factory RealtimeAudioState({
     @Default(false) bool isPlaying,
     @Default(false) bool isPaused,
