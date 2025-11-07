@@ -6,7 +6,7 @@ part 'realtime_audio_arguments.freezed.dart';
 part 'realtime_audio_arguments.g.dart';
 
 @freezed
-class RealtimeAudioArguments with _$RealtimeAudioArguments {
+abstract class RealtimeAudioArguments with _$RealtimeAudioArguments {
   const factory RealtimeAudioArguments.create({
     required bool isFirstCreate,
     @Default(true) bool voiceProcessing,
@@ -40,8 +40,9 @@ class RealtimeAudioArguments with _$RealtimeAudioArguments {
     final map = await channel.invokeMethod(runtimeType, json);
 
     return RealtimeAudioResponse.fromJson({
-      ...map,
-      'runtimeType': runtimeType,
-    }) as T;
+          ...map,
+          'runtimeType': runtimeType,
+        })
+        as T;
   }
 }
