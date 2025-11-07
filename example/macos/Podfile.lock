@@ -14,9 +14,9 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/realtime_audio/macos
 
 SPEC CHECKSUMS:
-  FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
+  FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
   realtime_audio: 23b69e81b270db224ec0df140d5c3084b4c60c59
 
 PODFILE CHECKSUM: ee954fade8f3b11c1f8b26bea93380ea85316f08
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2
